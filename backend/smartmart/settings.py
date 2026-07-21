@@ -20,7 +20,7 @@ ALLOWED_HOSTS = config(
 )
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://*.onrender.com",
+    "https://*.up.railway.app",
 ]
 # Application definition
 
@@ -199,6 +199,9 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
 
     CSRF_COOKIE_SECURE = True
+
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    USE_X_FORWARDED_HOST = True
 
     SECURE_HSTS_SECONDS = 31536000
 
