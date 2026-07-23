@@ -73,7 +73,8 @@ class WishlistListAPIView(APIView):
 
         serializer = WishlistSerializer(
             wishlist,
-            many=True
+            many=True,
+            context={"request": request}
         )
 
         return Response(
