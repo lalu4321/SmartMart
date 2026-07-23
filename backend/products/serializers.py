@@ -44,17 +44,26 @@ class ProductAttributeSerializer(serializers.ModelSerializer):
 
 class ProductVariantSerializer(serializers.ModelSerializer):
 
+    product_name = serializers.CharField(
+        source="product.name",
+        read_only=True,
+    )
+
     class Meta:
+
         model = ProductVariant
+
         fields = (
             "id",
             "product",
+            "product_name",
             "variant_name",
             "sku",
             "price",
             "discount_price",
             "is_active",
         )
+
         read_only_fields = (
             "id",
         )
