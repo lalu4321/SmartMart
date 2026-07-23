@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-
 from .models import (
     Order,
     OrderItem,
@@ -12,12 +11,24 @@ from .models import (
 
 class OrderItemSerializer(serializers.ModelSerializer):
 
+    product_name = serializers.CharField(
+        source="variant.product.name",
+        read_only=True
+    )
+
+    variant_name = serializers.CharField(
+        source="variant.variant_name",
+        read_only=True
+    )
+
     class Meta:
         model = OrderItem
 
         fields = (
             "id",
             "variant",
+            "product_name",
+            "variant_name",
             "quantity",
             "unit_price",
             "total_price",
@@ -40,6 +51,11 @@ class OrderStatusHistorySerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
 
+    customer_name = serializers.CharField(
+        source="account.username",
+        read_only=True
+    )
+
     items = OrderItemSerializer(
         many=True,
         read_only=True
@@ -58,6 +74,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "id",
             "order_number",
             "account",
+            "customer_name",
             "shipping_address",
             "status",
             "total_amount",
@@ -71,11 +88,13 @@ class OrderSerializer(serializers.ModelSerializer):
             "id",
             "order_number",
             "account",
+            "customer_name",
             "status",
             "total_amount",
             "created_at",
             "updated_at",
         )
+
 
 class ReturnRequestSerializer(serializers.ModelSerializer):
 
@@ -98,6 +117,7 @@ class ReturnRequestSerializer(serializers.ModelSerializer):
             "requested_at",
             "updated_at",
         )
+
 
 class RefundSerializer(serializers.ModelSerializer):
 
