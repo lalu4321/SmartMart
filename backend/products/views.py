@@ -5,6 +5,7 @@ from django.db.models import Avg, Count, Q
 from rest_framework.exceptions import ValidationError
 from django.http import Http404
 
+from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -97,6 +98,8 @@ class ProductCreateAPIView(APIView):
 
 class ProductListAPIView(APIView):
 
+    permission_classes = [AllowAny]
+
     def get(self, request):
 
         products = Product.objects.annotate(
@@ -179,6 +182,8 @@ class ProductListAPIView(APIView):
 )
 
 class ProductDetailAPIView(APIView):
+
+    permission_classes = [AllowAny]
 
     def get(self, request, pk):
 

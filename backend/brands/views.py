@@ -1,11 +1,14 @@
 from django.shortcuts import get_object_or_404
 from django.utils.text import slugify
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import AllowAny
+
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+
 
 from .models import Brand
 from .serializers import BrandSerializer
@@ -69,7 +72,7 @@ class BrandCreateAPIView(APIView):
     
 class BrandListAPIView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
 
@@ -91,7 +94,7 @@ class BrandListAPIView(APIView):
     
 class BrandDetailAPIView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, pk):
 
