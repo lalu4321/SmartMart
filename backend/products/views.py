@@ -107,47 +107,54 @@ class ProductListAPIView(APIView):
             total_reviews=Count("reviews")
         )
 
-        # Search by product name
+        # -----------------------------
+        # Search
+        # -----------------------------
         search = request.query_params.get("search")
 
         if search:
             products = products.filter(
-                Q(name__icontains=search)
-            )
+                Q(name__icontains=search) |
+                Q(description__icontains=search) |
+                Q(category__name__icontains=search) |
+                Q(brand__name__icontains=search)
+            ).distinct()
 
-        # Filter by category
+        # -----------------------------
+        # Category Filter
+        # -----------------------------
         category = request.query_params.get("category")
 
         if category:
-            products = products.filter(
-                category_id=category
-            )
+            products = products.filter(category_id=category)
 
-        # Filter by brand
+        # -----------------------------
+        # Brand Filter
+        # -----------------------------
         brand = request.query_params.get("brand")
 
         if brand:
-            products = products.filter(
-                brand_id=brand
-            )
+            products = products.filter(brand_id=brand)
 
-        # Minimum price
+        # -----------------------------
+        # Minimum Price Filter
+        # -----------------------------
         min_price = request.query_params.get("min_price")
 
         if min_price:
-            products = products.filter(
-                price__gte=min_price
-            )
+            products = products.filter(price__gte=min_price)
 
-        # Maximum price
+        # -----------------------------
+        # Maximum Price Filter
+        # -----------------------------
         max_price = request.query_params.get("max_price")
 
         if max_price:
-            products = products.filter(
-                price__lte=max_price
-            )
+            products = products.filter(price__lte=max_price)
 
-        # Ordering
+        # -----------------------------
+        # Sorting
+        # -----------------------------
         ordering = request.query_params.get("ordering")
 
         allowed_ordering = [
@@ -162,24 +169,27 @@ class ProductListAPIView(APIView):
         if ordering in allowed_ordering:
             products = products.order_by(ordering)
 
+        # -----------------------------
+        # Pagination
+        # -----------------------------
         paginator = ProductPagination()
 
         page = paginator.paginate_queryset(
-        products,
-        request
+            products,
+            request
         )
 
         serializer = ProductSerializer(
-        page,
-        many=True
-            )
+            page,
+            many=True
+        )
 
         return paginator.get_paginated_response(
-    {
-        "message": "Products fetched successfully.",
-        "data": serializer.data
-    }
-)
+            {
+                "message": "Products fetched successfully.",
+                "data": serializer.data,
+            }
+        )
 
 class ProductDetailAPIView(APIView):
 
