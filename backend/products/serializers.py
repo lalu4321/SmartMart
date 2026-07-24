@@ -50,9 +50,7 @@ class ProductVariantSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-
         model = ProductVariant
-
         fields = (
             "id",
             "product",
@@ -63,7 +61,6 @@ class ProductVariantSerializer(serializers.ModelSerializer):
             "discount_price",
             "is_active",
         )
-
         read_only_fields = (
             "id",
         )
@@ -103,6 +100,9 @@ class ProductSerializer(serializers.ModelSerializer):
         source="brand.name",
         read_only=True
     )
+
+    product_image = serializers.SerializerMethodField()
+    stock = serializers.SerializerMethodField()
 
     images = ProductImageSerializer(
         many=True,
@@ -146,6 +146,9 @@ class ProductSerializer(serializers.ModelSerializer):
             "average_rating",
             "total_reviews",
 
+            "product_image",
+            "stock",
+
             "images",
             "attributes",
             "variants",
@@ -161,3 +164,31 @@ class ProductSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
+
+    def get_product_image(self, obj):
+        primary_image = obj.images.filter(is_primary=True).first()
+
+        if not primary_image:
+            primary_image = obj.images.first()
+
+        if primary_image:
+            request = self.context.get("request")
+
+            if request:
+                return request.build_absolute_uri(
+                    primary_image.image.url
+                )
+
+            return primary_image.image.url
+
+        return None
+
+    def get_stock(self, obj):
+        inventory = ProductInventory.objects.filter(
+            variant__product=obj
+        ).first()
+
+        if inventory:
+            return inventory.available_stock
+
+        return 0
