@@ -155,7 +155,10 @@ class OrderListAPIView(APIView):
 
         serializer = OrderSerializer(
             orders,
-            many=True
+            many=True,
+            context={
+            "request": request
+            }
         )
 
         return Response(
@@ -179,7 +182,12 @@ class OrderDetailAPIView(APIView):
             account=request.user
         )
 
-        serializer = OrderSerializer(order)
+        serializer = OrderSerializer(
+            order,
+            context={
+                "request": request
+                }
+        )
 
         return Response(
             {
