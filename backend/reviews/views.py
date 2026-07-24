@@ -94,7 +94,8 @@ class ReviewListAPIView(APIView):
 
         serializer = ReviewSerializer(
             reviews,
-            many=True
+            many=True,
+            context={"request": request}
         )
 
         return Response(
@@ -117,7 +118,10 @@ class ReviewDetailAPIView(APIView):
             pk=pk
         )
 
-        serializer = ReviewSerializer(review)
+        serializer = ReviewSerializer(
+            review,
+            context={"request": request}
+        )
 
         return Response(
             {
@@ -144,7 +148,8 @@ class ReviewUpdateAPIView(APIView):
             serializer = ReviewSerializer(
                 review,
                 data=request.data,
-                partial=True
+                partial=True,
+                context={"request": request}
             )
 
             serializer.is_valid(raise_exception=True)
