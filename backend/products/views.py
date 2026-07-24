@@ -4,6 +4,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Avg, Count, Q
 from rest_framework.exceptions import ValidationError
 from django.http import Http404
+from accounts.models import SellerProfile
 
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -1127,3 +1128,33 @@ class ProductInventoryDeleteAPIView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class MyProductsAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        seller = get_object_or_404(
+            SellerProfile,
+            account=request.user
+        )
+
+        products = Product.objects.filter(
+            seller=seller
+        ).order_by("-created_at")
+
+        serializer = ProductSerializer(
+            products,
+            many=True,
+            context={"request": request}
+        )
+
+        return Response(
+            {
+                "message": "Products fetched successfully.",
+                "count": products.count(),
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )

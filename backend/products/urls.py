@@ -26,6 +26,7 @@ from .views import (
     ProductInventoryDetailAPIView,
     ProductInventoryUpdateAPIView,
     ProductInventoryDeleteAPIView,
+    MyProductsAPIView,
 )
 
 urlpatterns = [
@@ -84,5 +85,7 @@ urlpatterns = [
     path("inventory/<int:pk>/update/", ProductInventoryUpdateAPIView.as_view(), name="product-inventory-update"),
 
     path("inventory/<int:pk>/delete/", ProductInventoryDeleteAPIView.as_view(), name="product-inventory-delete"),
+
+    path("my-products/",MyProductsAPIView.as_view(),name="my-products"),
 
 ]
