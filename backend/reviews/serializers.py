@@ -9,6 +9,8 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    is_owner = serializers.SerializerMethodField()
+
     class Meta:
         model = Review
 
@@ -21,6 +23,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             "review",
             "created_at",
             "updated_at",
+            "is_owner",
         )
 
         read_only_fields = (
@@ -29,7 +32,16 @@ class ReviewSerializer(serializers.ModelSerializer):
             "username",
             "created_at",
             "updated_at",
+            "is_owner",
         )
+
+    def get_is_owner(self, obj):
+        request = self.context.get("request")
+
+        if request and request.user.is_authenticated:
+            return obj.account == request.user
+
+        return False
 
     def validate_rating(self, value):
         if value < 1 or value > 5:
