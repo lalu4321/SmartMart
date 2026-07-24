@@ -9,6 +9,35 @@ from .models import (
 )
 
 
+# ============================
+# Address Serializer
+# ============================
+
+class OrderAddressSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Order.shipping_address.field.related_model
+
+        fields = (
+            "id",
+            "full_name",
+            "phone",
+            "address_line1",
+            "address_line2",
+            "landmark",
+            "city",
+            "district",
+            "state",
+            "country",
+            "pincode",
+        )
+
+
+
+# ============================
+# Order Item Serializer
+# ============================
+
 class OrderItemSerializer(serializers.ModelSerializer):
 
     product_name = serializers.CharField(
@@ -21,19 +50,45 @@ class OrderItemSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+
+    product_image = serializers.SerializerMethodField()
+
+
+    def get_product_image(self, obj):
+
+        try:
+            image = obj.variant.product.images.first()
+
+            if image:
+                return image.image.url
+
+        except Exception:
+            pass
+
+        return None
+
+
+
     class Meta:
+
         model = OrderItem
 
         fields = (
             "id",
             "variant",
             "product_name",
+            "product_image",
             "variant_name",
             "quantity",
             "unit_price",
             "total_price",
         )
 
+
+
+# ============================
+# Order Status History
+# ============================
 
 class OrderStatusHistorySerializer(serializers.ModelSerializer):
 
@@ -47,7 +102,9 @@ class OrderStatusHistorySerializer(serializers.ModelSerializer):
             "remarks",
             "created_at",
         )
-
+# ============================
+# Order Serializer
+# ============================
 
 class OrderSerializer(serializers.ModelSerializer):
 
@@ -56,15 +113,23 @@ class OrderSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+
+    shipping_address = OrderAddressSerializer(
+        read_only=True
+    )
+
+
     items = OrderItemSerializer(
         many=True,
         read_only=True
     )
 
+
     status_history = OrderStatusHistorySerializer(
         many=True,
         read_only=True
     )
+
 
     class Meta:
 
@@ -84,6 +149,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
+
         read_only_fields = (
             "id",
             "order_number",
@@ -95,6 +161,11 @@ class OrderSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
+
+
+# ============================
+# Return Request Serializer
+# ============================
 
 class ReturnRequestSerializer(serializers.ModelSerializer):
 
@@ -111,6 +182,7 @@ class ReturnRequestSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
+
         read_only_fields = (
             "id",
             "status",
@@ -118,6 +190,11 @@ class ReturnRequestSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
+
+
+# ============================
+# Refund Serializer
+# ============================
 
 class RefundSerializer(serializers.ModelSerializer):
 
@@ -133,6 +210,7 @@ class RefundSerializer(serializers.ModelSerializer):
             "refunded_at",
             "created_at",
         )
+
 
         read_only_fields = (
             "id",
