@@ -4,6 +4,7 @@ from .views import (
     PaymentCreateAPIView,
     PaymentListAPIView,
     PaymentDetailAPIView,
+    PaymentConfirmAPIView,
 )
 
 urlpatterns = [
@@ -25,4 +26,9 @@ urlpatterns = [
         PaymentDetailAPIView.as_view(),
         name="payment-detail",
     ),
+    path(
+        "<int:pk>/confirm/",
+        PaymentConfirmAPIView.as_view(),
+        name="payment-confirm"
+),
 ]

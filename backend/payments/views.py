@@ -122,3 +122,69 @@ class PaymentDetailAPIView(APIView):
         serializer = PaymentSerializer(payment)
 
         return Response(serializer.data)
+
+class PaymentConfirmAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+
+    @transaction.atomic
+    def put(self, request, pk):
+
+        payment = get_object_or_404(
+            Payment,
+            pk=pk,
+            account=request.user
+        )
+
+
+        if payment.payment_status == Payment.PaymentStatus.SUCCESS:
+
+            return Response(
+                {
+                    "message": "Payment already completed."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+        payment.payment_status = Payment.PaymentStatus.SUCCESS
+
+        payment.transaction_id = (
+            f"TXN{random.randint(10000000,99999999)}"
+        )
+
+        payment.save()
+
+
+
+        order = payment.order
+
+        order.status = Order.OrderStatus.CONFIRMED
+
+        order.save()
+
+
+
+        OrderStatusHistory.objects.create(
+            order=order,
+            status=Order.OrderStatus.CONFIRMED,
+            remarks="Payment successful."
+        )
+
+
+        Notification.objects.create(
+            account=request.user,
+            title="Payment Successful",
+            message=f"Payment received for Order #{order.id}.",
+            notification_type=Notification.NotificationType.PAYMENT
+        )
+
+
+        return Response(
+            {
+                "message":"Payment confirmed successfully.",
+                "data":PaymentSerializer(payment).data
+            },
+            status=status.HTTP_200_OK
+        )
