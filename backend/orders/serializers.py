@@ -57,9 +57,18 @@ class OrderItemSerializer(serializers.ModelSerializer):
     def get_product_image(self, obj):
 
         try:
+
             image = obj.variant.product.images.first()
 
             if image:
+
+                request = self.context.get("request")
+
+                if request:
+                    return request.build_absolute_uri(
+                        image.image.url
+                    )
+
                 return image.image.url
 
         except Exception:
