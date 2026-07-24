@@ -94,19 +94,29 @@ class ProductSerializer(serializers.ModelSerializer):
     average_rating = serializers.FloatField(read_only=True)
     total_reviews = serializers.IntegerField(read_only=True)
 
+    category_name = serializers.CharField(
+        source="category.name",
+        read_only=True
+    )
+
+    brand_name = serializers.CharField(
+        source="brand.name",
+        read_only=True
+    )
+
     images = ProductImageSerializer(
         many=True,
-        read_only=True,
+        read_only=True
     )
 
     attributes = ProductAttributeSerializer(
         many=True,
-        read_only=True,
+        read_only=True
     )
 
     variants = ProductVariantSerializer(
         many=True,
-        read_only=True,
+        read_only=True
     )
 
     class Meta:
@@ -115,8 +125,13 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "seller",
+
             "category",
+            "category_name",
+
             "brand",
+            "brand_name",
+
             "name",
             "slug",
             "description",
@@ -124,13 +139,17 @@ class ProductSerializer(serializers.ModelSerializer):
             "discount_price",
             "sku",
             "weight",
+
             "is_featured",
             "is_active",
+
             "average_rating",
             "total_reviews",
+
             "images",
             "attributes",
             "variants",
+
             "created_at",
             "updated_at",
         )
