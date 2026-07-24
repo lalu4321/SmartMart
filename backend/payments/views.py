@@ -1,4 +1,5 @@
 import random
+
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 
@@ -14,9 +15,16 @@ from orders.models import Order, OrderStatusHistory
 
 from notifications.models import Notification
 
+
+
+# =====================================
+# Create Payment
+# =====================================
+
 class PaymentCreateAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
+
 
     @transaction.atomic
     def post(self, request, order_id):
@@ -29,6 +37,7 @@ class PaymentCreateAPIView(APIView):
                 account=request.user
             )
 
+
             if hasattr(order, "payment"):
 
                 return Response(
@@ -38,56 +47,71 @@ class PaymentCreateAPIView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            serializer = PaymentSerializer(data=request.data)
 
-            serializer.is_valid(raise_exception=True)
+
+            serializer = PaymentSerializer(
+                data=request.data
+            )
+
+
+            serializer.is_valid(
+                raise_exception=True
+            )
+
+
 
             payment = serializer.save(
+
                 order=order,
+
                 account=request.user,
+
                 amount=order.total_amount,
-                payment_status=Payment.PaymentStatus.SUCCESS,
-                transaction_id=f"TXN{random.randint(10000000,99999999)}"
+
+                payment_status=Payment.PaymentStatus.PENDING,
+
+                transaction_id=""
+
             )
 
-            order.status = Order.OrderStatus.CONFIRMED
-            order.save()
 
-            OrderStatusHistory.objects.create(
-                order=order,
-                status=Order.OrderStatus.CONFIRMED,
-                remarks="Payment successful."
-            )
-
-            Notification.objects.create(
-                account=request.user,
-                title="Payment Successful",
-                message=f"Payment received for Order #{order.id}.",
-                notification_type=Notification.NotificationType.PAYMENT
-            )
 
             return Response(
+
                 {
-                    "message": "Payment completed successfully.",
+                    "message": "Payment initiated successfully.",
                     "data": PaymentSerializer(payment).data
                 },
+
                 status=status.HTTP_201_CREATED
             )
 
+
+
         except Exception as e:
 
+
             return Response(
+
                 {
                     "success": False,
-                    "message": "Payment failed.",
+                    "message": "Payment initiation failed.",
                     "error": str(e)
                 },
+
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
+
+
+# =====================================
+# Payment List
+# =====================================
+
 class PaymentListAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
+
 
     def get(self, request):
 
@@ -95,33 +119,60 @@ class PaymentListAPIView(APIView):
             account=request.user
         )
 
+
         serializer = PaymentSerializer(
             payments,
             many=True
         )
 
+
         return Response(
+
             {
                 "count": payments.count(),
                 "data": serializer.data
-            }
+            },
+
+            status=status.HTTP_200_OK
         )
-    
+# =====================================
+# Payment Detail
+# =====================================
+
 class PaymentDetailAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+
     def get(self, request, pk):
 
         payment = get_object_or_404(
+
             Payment,
+
             pk=pk,
+
             account=request.user
+
         )
+
 
         serializer = PaymentSerializer(payment)
 
-        return Response(serializer.data)
+
+        return Response(
+
+            serializer.data,
+
+            status=status.HTTP_200_OK
+
+        )
+
+
+
+# =====================================
+# Confirm Payment
+# =====================================
 
 class PaymentConfirmAPIView(APIView):
 
@@ -131,60 +182,121 @@ class PaymentConfirmAPIView(APIView):
     @transaction.atomic
     def put(self, request, pk):
 
-        payment = get_object_or_404(
-            Payment,
-            pk=pk,
-            account=request.user
-        )
+        try:
 
+            payment = get_object_or_404(
 
-        if payment.payment_status == Payment.PaymentStatus.SUCCESS:
+                Payment,
 
-            return Response(
-                {
-                    "message": "Payment already completed."
-                },
-                status=status.HTTP_400_BAD_REQUEST
+                pk=pk,
+
+                account=request.user
+
             )
 
 
-        payment.payment_status = Payment.PaymentStatus.SUCCESS
 
-        payment.transaction_id = (
-            f"TXN{random.randint(10000000,99999999)}"
-        )
-
-        payment.save()
+            if payment.payment_status == Payment.PaymentStatus.SUCCESS:
 
 
+                return Response(
 
-        order = payment.order
+                    {
+                        "message": "Payment already completed."
+                    },
 
-        order.status = Order.OrderStatus.CONFIRMED
+                    status=status.HTTP_400_BAD_REQUEST
 
-        order.save()
+                )
 
 
 
-        OrderStatusHistory.objects.create(
-            order=order,
-            status=Order.OrderStatus.CONFIRMED,
-            remarks="Payment successful."
-        )
+            # Update Payment
+
+            payment.payment_status = (
+                Payment.PaymentStatus.SUCCESS
+            )
 
 
-        Notification.objects.create(
-            account=request.user,
-            title="Payment Successful",
-            message=f"Payment received for Order #{order.id}.",
-            notification_type=Notification.NotificationType.PAYMENT
-        )
+            payment.transaction_id = (
+
+                f"TXN{random.randint(10000000,99999999)}"
+
+            )
+
+            payment.save()
 
 
-        return Response(
-            {
-                "message":"Payment confirmed successfully.",
-                "data":PaymentSerializer(payment).data
-            },
-            status=status.HTTP_200_OK
-        )
+            # Update Order
+
+            order = payment.order
+
+
+            order.status = (
+                Order.OrderStatus.CONFIRMED
+            )
+
+
+            order.save()
+
+            # Add Order History
+
+            OrderStatusHistory.objects.create(
+
+                order=order,
+
+                status=Order.OrderStatus.CONFIRMED,
+
+                remarks="Payment successful."
+
+            )
+
+            # Notification
+
+            Notification.objects.create(
+
+                account=request.user,
+
+                title="Payment Successful",
+
+                message=(
+                    f"Payment received for Order #{order.id}."
+                ),
+
+                notification_type=(
+                    Notification.NotificationType.PAYMENT
+                )
+
+            )
+
+
+
+            return Response(
+
+                {
+                    "message": "Payment confirmed successfully.",
+
+                    "data": PaymentSerializer(payment).data
+                },
+
+                status=status.HTTP_200_OK
+
+            )
+
+        except Exception as e:
+
+
+            return Response(
+
+                {
+                    "success": False,
+
+                    "message": "Payment confirmation failed.",
+
+                    "error": str(e)
+
+                },
+
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+
+            )
