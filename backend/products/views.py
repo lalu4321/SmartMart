@@ -782,27 +782,32 @@ class ProductVariantListAPIView(APIView):
             status=status.HTTP_200_OK
         )
     
-class ProductVariantDetailAPIView(APIView):
+class ProductVariantListAPIView(APIView):
 
-    def get(self, request, pk):
+    def get(self, request):
 
-        variant = get_object_or_404(
-            ProductVariant,
-            pk=pk
-        )
+        product_id = request.query_params.get("product")
+
+        if product_id:
+
+            variants = ProductVariant.objects.filter(
+                product_id=product_id
+            )
+
+        else:
+
+            variants = ProductVariant.objects.all()
+
 
         serializer = ProductVariantSerializer(
-            variant
+            variants,
+            many=True
         )
 
-        return Response(
-            {
-                "message": "Product variant fetched successfully.",
-                "data": serializer.data
-            },
-            status=status.HTTP_200_OK
-        )
-
+        return Response({
+            "data": serializer.data
+        })
+    
 class ProductVariantUpdateAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
