@@ -7,6 +7,7 @@ from .views import (
     CancelOrderAPIView,
     ReturnRequestAPIView,
     RefundAPIView,
+    SellerOrderDetailAPIView,
 )
 
 urlpatterns = [
@@ -22,4 +23,6 @@ urlpatterns = [
     path("<int:order_id>/return/", ReturnRequestAPIView.as_view(), name="return-request"),
 
     path("returns/<int:return_id>/refund/", RefundAPIView.as_view(), name="refund"),
+
+    path("seller/<int:order_id>/",SellerOrderDetailAPIView.as_view(),name="seller-order-detail"),
 ]

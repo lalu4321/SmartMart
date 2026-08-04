@@ -366,3 +366,27 @@ class RefundAPIView(APIView):
             },
             status=status.HTTP_201_CREATED
         )
+class SellerOrderDetailAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, order_id):
+
+        order = get_object_or_404(
+            Order,
+            id=order_id,
+            items__variant__product__seller=request.user.seller_profile
+        )
+
+        serializer = OrderSerializer(
+            order,
+            context={"request": request}
+        )
+
+        return Response(
+            {
+                "message": "Order fetched successfully.",
+                "data": serializer.data
+            },
+            status=status.HTTP_200_OK
+        )
