@@ -17,7 +17,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
 
     # Dashboard
-    path("api/dashboard/", include("dashboards.urls")),
+    path("api/admin/", include("dashboards.urls")),
 
     # Accounts
     path("api/accounts/", include("accounts.urls")),
