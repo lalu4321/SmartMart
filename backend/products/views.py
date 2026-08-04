@@ -766,26 +766,6 @@ class ProductVariantListAPIView(APIView):
 
     def get(self, request):
 
-        variants = ProductVariant.objects.all()
-
-        serializer = ProductVariantSerializer(
-            variants,
-            many=True
-        )
-
-        return Response(
-            {
-                "message": "Product variants fetched successfully.",
-                "count": variants.count(),
-                "data": serializer.data
-            },
-            status=status.HTTP_200_OK
-        )
-    
-class ProductVariantListAPIView(APIView):
-
-    def get(self, request):
-
         product_id = request.query_params.get("product")
 
         if product_id:
@@ -807,6 +787,25 @@ class ProductVariantListAPIView(APIView):
         return Response({
             "data": serializer.data
         })
+
+class ProductVariantDetailAPIView(APIView):
+
+    def get(self, request, pk):
+
+        variant = get_object_or_404(
+            ProductVariant,
+            pk=pk
+        )
+
+        serializer = ProductVariantSerializer(variant)
+
+        return Response(
+            {
+                "message": "Product variant fetched successfully.",
+                "data": serializer.data
+            },
+            status=status.HTTP_200_OK
+        )
     
 class ProductVariantUpdateAPIView(APIView):
 
