@@ -76,7 +76,7 @@ class BrandListAPIView(APIView):
 
     def get(self, request):
 
-        brands = Brand.objects.filter(is_active=True)
+        brands = Brand.objects.all()
 
         serializer = BrandSerializer(
             brands,
