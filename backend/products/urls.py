@@ -36,6 +36,7 @@ from .admin_views import (
     AdminProductStatusAPIView,
     AdminProductFeaturedAPIView,
 )
+
 urlpatterns = [
 
     # Product APIs
@@ -95,8 +96,10 @@ urlpatterns = [
 
     path("my-products/",MyProductsAPIView.as_view(),name="my-products"),
 
-    # Admin Product APIs
-    
+# ===========================
+# Admin Product APIs
+# ===========================
+
     path("admin/list/", AdminProductListAPIView.as_view(), name="admin-product-list"),
 
     path("admin/<int:pk>/", AdminProductDetailAPIView.as_view(), name="admin-product-detail"),
