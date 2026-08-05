@@ -19,6 +19,7 @@ from .views import (
 from .admin_views import (
     AdminUserListAPIView,
     AdminUserDetailAPIView,
+    AdminUserCreateAPIView,
     AdminUserUpdateAPIView,
     AdminUserDeleteAPIView,
     AdminUserStatusAPIView,
@@ -61,5 +62,7 @@ urlpatterns = [
     path("admin/<int:pk>/delete/", AdminUserDeleteAPIView.as_view(), name="admin-user-delete"),
 
     path("admin/<int:pk>/status/", AdminUserStatusAPIView.as_view(), name="admin-user-status"),
+
+    path("admin/create/",AdminUserCreateAPIView.as_view(),name="admin-user-create"),
     
     ]
