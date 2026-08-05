@@ -16,6 +16,14 @@ from .views import (
     SellerProfileDeleteAPIView,
 )
 
+from .admin_views import (
+    AdminUserListAPIView,
+    AdminUserDetailAPIView,
+    AdminUserUpdateAPIView,
+    AdminUserDeleteAPIView,
+    AdminUserStatusAPIView,
+)
+
 urlpatterns = [
     # Account APIs
     path("register/", RegisterAPIView.as_view()),
@@ -39,4 +47,19 @@ urlpatterns = [
     path("seller-profile/detail/", SellerProfileAPIView.as_view()),
     path("seller-profile/update/", SellerProfileUpdateAPIView.as_view()),
     path("seller-profile/delete/", SellerProfileDeleteAPIView.as_view()),
-]
+
+    # ===========================
+    # Admin User APIs
+    # ===========================
+
+    path("admin/list/", AdminUserListAPIView.as_view(), name="admin-user-list"),
+
+    path("admin/<int:pk>/", AdminUserDetailAPIView.as_view(), name="admin-user-detail"),
+
+    path("admin/<int:pk>/update/", AdminUserUpdateAPIView.as_view(), name="admin-user-update"),
+
+    path("admin/<int:pk>/delete/", AdminUserDeleteAPIView.as_view(), name="admin-user-delete"),
+
+    path("admin/<int:pk>/status/", AdminUserStatusAPIView.as_view(), name="admin-user-status"),
+    
+    ]
