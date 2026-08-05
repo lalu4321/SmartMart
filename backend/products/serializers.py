@@ -12,7 +12,9 @@ from .models import (
 class ProductImageSerializer(serializers.ModelSerializer):
 
     class Meta:
+
         model = ProductImage
+
         fields = (
             "id",
             "product",
@@ -21,6 +23,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
             "is_primary",
             "created_at",
         )
+
         read_only_fields = (
             "id",
             "created_at",
@@ -30,13 +33,16 @@ class ProductImageSerializer(serializers.ModelSerializer):
 class ProductAttributeSerializer(serializers.ModelSerializer):
 
     class Meta:
+
         model = ProductAttribute
+
         fields = (
             "id",
             "product",
             "attribute_name",
             "attribute_value",
         )
+
         read_only_fields = (
             "id",
         )
@@ -46,11 +52,13 @@ class ProductVariantSerializer(serializers.ModelSerializer):
 
     product_name = serializers.CharField(
         source="product.name",
-        read_only=True,
+        read_only=True
     )
 
     class Meta:
+
         model = ProductVariant
+
         fields = (
             "id",
             "product",
@@ -61,6 +69,7 @@ class ProductVariantSerializer(serializers.ModelSerializer):
             "discount_price",
             "is_active",
         )
+
         read_only_fields = (
             "id",
         )
@@ -71,7 +80,9 @@ class ProductInventorySerializer(serializers.ModelSerializer):
     available_stock = serializers.ReadOnlyField()
 
     class Meta:
+
         model = ProductInventory
+
         fields = (
             "id",
             "variant",
@@ -80,6 +91,7 @@ class ProductInventorySerializer(serializers.ModelSerializer):
             "low_stock_threshold",
             "available_stock",
         )
+
         read_only_fields = (
             "id",
             "available_stock",
@@ -88,8 +100,10 @@ class ProductInventorySerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
 
-    average_rating = serializers.FloatField(read_only=True)
-    total_reviews = serializers.IntegerField(read_only=True)
+    seller_name = serializers.CharField(
+        source="seller.shop_name",
+        read_only=True
+    )
 
     category_name = serializers.CharField(
         source="category.name",
@@ -101,7 +115,18 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    average_rating = serializers.FloatField(
+        read_only=True
+    )
+
+    total_reviews = serializers.IntegerField(
+        read_only=True
+    )
+
+    discount_percentage = serializers.SerializerMethodField()
+
     product_image = serializers.SerializerMethodField()
+
     stock = serializers.SerializerMethodField()
 
     images = ProductImageSerializer(
@@ -120,11 +145,15 @@ class ProductSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
+
         model = Product
 
         fields = (
+
             "id",
+
             "seller",
+            "seller_name",
 
             "category",
             "category_name",
@@ -135,8 +164,11 @@ class ProductSerializer(serializers.ModelSerializer):
             "name",
             "slug",
             "description",
+
             "price",
             "discount_price",
+            "discount_percentage",
+
             "sku",
             "weight",
 
@@ -146,8 +178,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "average_rating",
             "total_reviews",
 
-            "product_image",
             "stock",
+            "product_image",
 
             "images",
             "attributes",
@@ -165,16 +197,39 @@ class ProductSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
+    def get_discount_percentage(self, obj):
+
+        if obj.discount_price:
+
+            return round(
+
+                (
+                    (obj.price - obj.discount_price)
+                    / obj.price
+                ) * 100,
+
+                2
+
+            )
+
+        return 0
+
     def get_product_image(self, obj):
-        primary_image = obj.images.filter(is_primary=True).first()
+
+        primary_image = obj.images.filter(
+            is_primary=True
+        ).first()
 
         if not primary_image:
+
             primary_image = obj.images.first()
 
-        if primary_image:
+        if primary_image and primary_image.image:
+
             request = self.context.get("request")
 
             if request:
+
                 return request.build_absolute_uri(
                     primary_image.image.url
                 )
@@ -184,11 +239,17 @@ class ProductSerializer(serializers.ModelSerializer):
         return None
 
     def get_stock(self, obj):
-        inventory = ProductInventory.objects.filter(
+
+        inventories = ProductInventory.objects.filter(
             variant__product=obj
-        ).first()
+        )
 
-        if inventory:
-            return inventory.available_stock
+        total_stock = sum(
 
-        return 0
+            inventory.available_stock
+
+            for inventory in inventories
+
+        )
+
+        return total_stock
