@@ -5,6 +5,7 @@ class AccountSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Account
+
         fields = (
             "id",
             "username",
@@ -17,6 +18,9 @@ class AccountSerializer(serializers.ModelSerializer):
             "gender",
             "profile_image",
             "date_of_birth",
+
+            "is_active",      
+
             "is_verified",
             "created_at",
         )
