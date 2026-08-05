@@ -79,7 +79,7 @@ class CategoryListAPIView(APIView):
 
     def get(self, request):
 
-        categories = Category.objects.filter(is_active=True)
+        categories = Category.objects.all()
 
         serializer = CategorySerializer(
             categories,
