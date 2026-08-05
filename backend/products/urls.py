@@ -28,7 +28,14 @@ from .views import (
     ProductInventoryDeleteAPIView,
     MyProductsAPIView,
 )
-
+from .admin_views import (
+    AdminProductListAPIView,
+    AdminProductDetailAPIView,
+    AdminProductUpdateAPIView,
+    AdminProductDeleteAPIView,
+    AdminProductStatusAPIView,
+    AdminProductFeaturedAPIView,
+)
 urlpatterns = [
 
     # Product APIs
@@ -88,4 +95,19 @@ urlpatterns = [
 
     path("my-products/",MyProductsAPIView.as_view(),name="my-products"),
 
+    # Admin Product APIs
+    
+    path("admin/list/", AdminProductListAPIView.as_view(), name="admin-product-list"),
+
+    path("admin/<int:pk>/", AdminProductDetailAPIView.as_view(), name="admin-product-detail"),
+
+    path("admin/<int:pk>/update/", AdminProductUpdateAPIView.as_view(), name="admin-product-update"),
+
+    path("admin/<int:pk>/delete/", AdminProductDeleteAPIView.as_view(), name="admin-product-delete"),
+
+    path("admin/<int:pk>/status/", AdminProductStatusAPIView.as_view(), name="admin-product-status"),
+
+    path("admin/<int:pk>/featured/", AdminProductFeaturedAPIView.as_view(), name="admin-product-featured"),
+
 ]
+

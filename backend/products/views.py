@@ -1,10 +1,11 @@
 from django.shortcuts import get_object_or_404
-from django.utils.text import slugify
+
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Avg, Count, Q
 from rest_framework.exceptions import ValidationError
 from django.http import Http404
 from accounts.models import SellerProfile
+from .utils import generate_unique_slug 
 
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -18,23 +19,6 @@ from .pagination import ProductPagination
 
 from .models import Product,ProductAttribute,ProductVariant,ProductInventory,ProductImage
 from .serializers import ProductSerializer,ProductImageSerializer,ProductAttributeSerializer,ProductVariantSerializer, ProductInventorySerializer
-
-def generate_unique_slug(name, instance=None):
-
-    slug = slugify(name)
-    unique_slug = slug
-    counter = 1
-
-    while Product.objects.filter(
-        slug=unique_slug
-    ).exclude(
-        pk=instance.pk if instance else None
-    ).exists():
-
-        unique_slug = f"{slug}-{counter}"
-        counter += 1
-
-    return unique_slug
 
 class ProductCreateAPIView(APIView):
 
