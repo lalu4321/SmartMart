@@ -10,6 +10,7 @@ from .models import Account
 from .serializers import AccountSerializer
 
 
+
 class AdminUserListAPIView(APIView):
 
     permission_classes = [IsAdminUser]
@@ -260,3 +261,4 @@ class AdminUserCreateAPIView(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST,
         )
+
