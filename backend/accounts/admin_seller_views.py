@@ -59,19 +59,14 @@ class AdminSellerStatusAPIView(APIView):
 
     def patch(self, request, pk):
 
-        print("Logged in admin:", request.user.username)
-
         seller = get_object_or_404(
             SellerProfile,
             pk=pk
         )
 
-        print("Seller account:", seller.account.username)
-
         seller.account.is_active = not seller.account.is_active
-        seller.account.save(update_fields=["is_active"])
 
-        print("Seller active:", seller.account.is_active)
+        seller.account.save(update_fields=["is_active"])
 
         return Response(
             {
@@ -88,7 +83,6 @@ class AdminSellerStatusAPIView(APIView):
             },
             status=status.HTTP_200_OK,
         )
-
 class AdminSellerDeleteAPIView(APIView):
 
     permission_classes = [IsAdminUser]
@@ -99,6 +93,15 @@ class AdminSellerDeleteAPIView(APIView):
             SellerProfile,
             pk=pk
         )
+
+        if seller.account == request.user:
+
+            return Response(
+                {
+                    "message": "You cannot delete your own account."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         seller.account.delete()
 
