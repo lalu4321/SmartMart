@@ -10,6 +10,13 @@ from .views import (
     SellerOrderDetailAPIView,
 )
 
+from .admin_order_views import (
+    AdminOrderListAPIView,
+    AdminOrderDetailAPIView,
+    AdminOrderStatusAPIView,
+    AdminOrderDeleteAPIView,
+)
+
 urlpatterns = [
 
     path("place/", PlaceOrderAPIView.as_view()),
@@ -25,4 +32,16 @@ urlpatterns = [
     path("returns/<int:return_id>/refund/", RefundAPIView.as_view(), name="refund"),
 
     path("seller/<int:order_id>/",SellerOrderDetailAPIView.as_view(),name="seller-order-detail"),
+
+    # ==========================
+    # Admin Order APIs
+    # ==========================
+
+    path("admin/list/", AdminOrderListAPIView.as_view(), name="admin-order-list"),
+
+    path("admin/<int:pk>/", AdminOrderDetailAPIView.as_view(), name="admin-order-detail"),
+
+    path("admin/<int:pk>/status/", AdminOrderStatusAPIView.as_view(), name="admin-order-status"),
+    
+    path("admin/<int:pk>/delete/", AdminOrderDeleteAPIView.as_view(), name="admin-order-delete"),
 ]
