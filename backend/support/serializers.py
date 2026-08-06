@@ -47,6 +47,7 @@ class TicketReplySerializer(serializers.ModelSerializer):
 
         read_only_fields = (
             "id",
+            "ticket", 
             "account",
             "created_at",
         )
