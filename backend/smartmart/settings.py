@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'notifications',
     'support',
     'common',
+    "faq",
     'seller',
     'coupons',
     'dashboards',
