@@ -61,6 +61,9 @@ urlpatterns = [
     #FAQ
     path("api/faq/",include("faq.urls")),
 
+    #contact
+    path("api/contact/", include("contact.urls")),
+
 
     # JWT Authentication
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
