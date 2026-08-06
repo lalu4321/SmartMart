@@ -17,6 +17,16 @@ from .admin_order_views import (
     AdminOrderDeleteAPIView,
 )
 
+from .admin_return_views import (
+    AdminReturnListAPIView,
+    AdminReturnDetailAPIView,
+    AdminApproveReturnAPIView,
+    AdminRejectReturnAPIView,
+    AdminRefundListAPIView,
+    AdminRefundDetailAPIView,
+    AdminCompleteRefundAPIView,
+)
+
 urlpatterns = [
 
     path("place/", PlaceOrderAPIView.as_view()),
@@ -44,4 +54,22 @@ urlpatterns = [
     path("admin/<int:pk>/status/", AdminOrderStatusAPIView.as_view(), name="admin-order-status"),
     
     path("admin/<int:pk>/delete/", AdminOrderDeleteAPIView.as_view(), name="admin-order-delete"),
+
+
+    # ==========================
+    # Admin Return APIs
+    # ==========================
+
+    path("admin/returns/", AdminReturnListAPIView.as_view(), name="admin-return-list"),
+    path("admin/returns/<int:pk>/", AdminReturnDetailAPIView.as_view(), name="admin-return-detail"),
+    path("admin/returns/<int:pk>/approve/", AdminApproveReturnAPIView.as_view(), name="admin-return-approve"),
+    path("admin/returns/<int:pk>/reject/", AdminRejectReturnAPIView.as_view(), name="admin-return-reject"),
+
+    # ==========================
+    # Admin Refund APIs
+    # ==========================
+
+    path("admin/refunds/", AdminRefundListAPIView.as_view(), name="admin-refund-list"),
+    path("admin/refunds/<int:pk>/", AdminRefundDetailAPIView.as_view(), name="admin-refund-detail"),
+    path("admin/refunds/<int:pk>/complete/", AdminCompleteRefundAPIView.as_view(), name="admin-refund-complete"),
 ]
