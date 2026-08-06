@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'support',
     'common',
     "faq",
+    "contact",
     'seller',
     'coupons',
     'dashboards',
