@@ -53,21 +53,25 @@ class AdminSellerDetailAPIView(APIView):
             status=status.HTTP_200_OK,
         )
 
-
 class AdminSellerStatusAPIView(APIView):
 
     permission_classes = [IsAdminUser]
 
     def patch(self, request, pk):
 
+        print("Logged in admin:", request.user.username)
+
         seller = get_object_or_404(
             SellerProfile,
             pk=pk
         )
 
-        seller.account.is_active = not seller.account.is_active
+        print("Seller account:", seller.account.username)
 
+        seller.account.is_active = not seller.account.is_active
         seller.account.save(update_fields=["is_active"])
+
+        print("Seller active:", seller.account.is_active)
 
         return Response(
             {
@@ -84,7 +88,6 @@ class AdminSellerStatusAPIView(APIView):
             },
             status=status.HTTP_200_OK,
         )
-
 
 class AdminSellerDeleteAPIView(APIView):
 
