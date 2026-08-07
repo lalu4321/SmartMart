@@ -1,12 +1,12 @@
-from rest_framework.exceptions import ValidationError
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils.text import slugify
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.permissions import AllowAny
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Category
 from .serializers import CategorySerializer
@@ -34,42 +34,51 @@ class CategoryCreateAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request):
 
         try:
 
-            serializer = CategorySerializer(data=request.data)
-
-            if serializer.is_valid():
-
-                name = serializer.validated_data["name"]
-
-                category = serializer.save(
-                    slug=generate_unique_slug(name)
-                )
-
-                return Response(
-                    {
-                        "message": "Category created successfully.",
-                        "data": CategorySerializer(category).data
-                    },
-                    status=status.HTTP_201_CREATED
-                )
-
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
+            serializer = CategorySerializer(
+                data=request.data,
+                context={"request": request},
             )
 
+            serializer.is_valid(
+                raise_exception=True
+            )
+
+            name = serializer.validated_data["name"]
+
+            category = serializer.save(
+                slug=generate_unique_slug(name)
+            )
+
+            return Response(
+                {
+                    "message": "Category created successfully.",
+                    "data": CategorySerializer(
+                        category,
+                        context={"request": request},
+                    ).data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except ValidationError:
+            raise
+
         except Exception as e:
+
+            transaction.set_rollback(True)
 
             return Response(
                 {
                     "success": False,
                     "message": "Failed to create category.",
-                    "error": str(e)
+                    "error": str(e),
                 },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
@@ -79,11 +88,16 @@ class CategoryListAPIView(APIView):
 
     def get(self, request):
 
-        categories = Category.objects.all()
+        categories = (
+            Category.objects
+            .select_related("parent")
+            .order_by("name")
+        )
 
         serializer = CategorySerializer(
             categories,
-            many=True
+            many=True,
+            context={"request": request},
         )
 
         return Response(
@@ -103,12 +117,15 @@ class CategoryDetailAPIView(APIView):
     def get(self, request, pk):
 
         category = get_object_or_404(
-            Category,
+            Category.objects.select_related("parent"),
             pk=pk,
-            is_active=True
+            is_active=True,
         )
 
-        serializer = CategorySerializer(category)
+        serializer = CategorySerializer(
+            category,
+            context={"request": request},
+        )
 
         return Response(
             {
@@ -118,40 +135,52 @@ class CategoryDetailAPIView(APIView):
             status=status.HTTP_200_OK,
         )
 
+
 class CategoryUpdateAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def put(self, request, pk):
 
         try:
 
             category = get_object_or_404(
                 Category,
-                pk=pk
+                pk=pk,
             )
 
             serializer = CategorySerializer(
                 category,
                 data=request.data,
-                partial=True
+                partial=True,
+                context={"request": request},
             )
 
-            serializer.is_valid(raise_exception=True)
+            serializer.is_valid(
+                raise_exception=True
+            )
 
             category = serializer.save()
 
             if "name" in serializer.validated_data:
+
                 category.slug = generate_unique_slug(
                     category.name,
-                    category
+                    category,
                 )
-                category.save(update_fields=["slug"])
+
+                category.save(
+                    update_fields=["slug"]
+                )
 
             return Response(
                 {
                     "message": "Category updated successfully.",
-                    "data": CategorySerializer(category).data,
+                    "data": CategorySerializer(
+                        category,
+                        context={"request": request},
+                    ).data,
                 },
                 status=status.HTTP_200_OK,
             )
@@ -160,26 +189,31 @@ class CategoryUpdateAPIView(APIView):
             raise
 
         except Exception as e:
+
+            transaction.set_rollback(True)
+
             return Response(
                 {
                     "success": False,
                     "message": "Failed to update category.",
-                    "error": str(e)
+                    "error": str(e),
                 },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
 
 class CategoryDeleteAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def delete(self, request, pk):
 
         try:
 
             category = get_object_or_404(
                 Category,
-                pk=pk
+                pk=pk,
             )
 
             category.delete()
@@ -188,18 +222,22 @@ class CategoryDeleteAPIView(APIView):
                 {
                     "message": "Category deleted successfully."
                 },
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
 
         except ValidationError:
             raise
 
         except Exception as e:
+
+            transaction.set_rollback(True)
+
             return Response(
                 {
                     "success": False,
                     "message": "Failed to delete category.",
-                    "error": str(e)
+                    "error": str(e),
                 },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
