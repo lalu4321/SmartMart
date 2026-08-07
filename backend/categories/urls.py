@@ -19,4 +19,4 @@ urlpatterns = [
     path("<int:pk>/", CategoryDetailAPIView.as_view(), name="category-detail"),
     path("<int:pk>/update/", CategoryUpdateAPIView.as_view(), name="category-update"),
     path("<int:pk>/delete/", CategoryDeleteAPIView.as_view(), name="category-delete"),
-] already
+] 
