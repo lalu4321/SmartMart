@@ -9,6 +9,11 @@ from .views import (
 )
 
 urlpatterns = [
+
+    # ==================================
+    # Wishlist APIs
+    # ==================================
+
     path("", WishlistCreateAPIView.as_view(), name="wishlist-create"),
     path("list/", WishlistListAPIView.as_view(), name="wishlist-list"),
     path("<int:pk>/", WishlistDetailAPIView.as_view(), name="wishlist-detail"),
