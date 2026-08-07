@@ -1,14 +1,14 @@
-from django.shortcuts import get_object_or_404
+from django.db import transaction
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Account
 from .serializers import AccountSerializer
-
 
 
 class AdminUserListAPIView(APIView):
@@ -17,57 +17,40 @@ class AdminUserListAPIView(APIView):
 
     def get(self, request):
 
-        users = Account.objects.all()
+        users = Account.objects.all().order_by("-created_at")
 
-        search = request.query_params.get("search")
+        search = request.query_params.get("search", "").strip()
 
         if search:
-
             users = users.filter(
-
                 Q(username__icontains=search)
-
                 | Q(first_name__icontains=search)
-
                 | Q(last_name__icontains=search)
-
                 | Q(email__icontains=search)
-
                 | Q(phone__icontains=search)
-
             )
 
-        role = request.query_params.get("role")
+        role = request.query_params.get("role", "").strip()
 
         if role:
-
             users = users.filter(role=role)
 
         serializer = AccountSerializer(
-
             users,
-
             many=True,
-
-            context={"request": request}
-
+            context={"request": request},
         )
 
         return Response(
-
             {
-
                 "message": "Users fetched successfully.",
-
                 "count": users.count(),
-
                 "data": serializer.data,
-
             },
-
             status=status.HTTP_200_OK,
-
         )
+
+
 class AdminUserDetailAPIView(APIView):
 
     permission_classes = [IsAdminUser]
@@ -76,12 +59,12 @@ class AdminUserDetailAPIView(APIView):
 
         user = get_object_or_404(
             Account,
-            pk=pk
+            pk=pk,
         )
 
         serializer = AccountSerializer(
             user,
-            context={"request": request}
+            context={"request": request},
         )
 
         return Response(
@@ -92,23 +75,26 @@ class AdminUserDetailAPIView(APIView):
             status=status.HTTP_200_OK,
         )
 
+
 class AdminUserUpdateAPIView(APIView):
 
     permission_classes = [IsAdminUser]
 
+    @transaction.atomic
     def put(self, request, pk):
 
         try:
 
             user = get_object_or_404(
                 Account,
-                pk=pk
+                pk=pk,
             )
 
             serializer = AccountSerializer(
                 user,
                 data=request.data,
-                partial=True
+                partial=True,
+                context={"request": request},
             )
 
             serializer.is_valid(
@@ -120,17 +106,14 @@ class AdminUserUpdateAPIView(APIView):
             return Response(
                 {
                     "message": "User updated successfully.",
-                    "data": AccountSerializer(
-                        user,
-                        context={
-                            "request": request
-                        }
-                    ).data,
+                    "data": serializer.data,
                 },
                 status=status.HTTP_200_OK,
             )
 
         except Exception as e:
+
+            transaction.set_rollback(True)
 
             return Response(
                 {
@@ -141,21 +124,22 @@ class AdminUserUpdateAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+
 class AdminUserDeleteAPIView(APIView):
 
     permission_classes = [IsAdminUser]
 
+    @transaction.atomic
     def delete(self, request, pk):
 
         try:
 
             user = get_object_or_404(
                 Account,
-                pk=pk
+                pk=pk,
             )
 
             if user == request.user:
-
                 return Response(
                     {
                         "message": "You cannot delete your own account."
@@ -174,6 +158,8 @@ class AdminUserDeleteAPIView(APIView):
 
         except Exception as e:
 
+            transaction.set_rollback(True)
+
             return Response(
                 {
                     "success": False,
@@ -183,21 +169,22 @@ class AdminUserDeleteAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+
 class AdminUserStatusAPIView(APIView):
 
     permission_classes = [IsAdminUser]
 
+    @transaction.atomic
     def patch(self, request, pk):
 
         try:
 
             user = get_object_or_404(
                 Account,
-                pk=pk
+                pk=pk,
             )
 
             if user == request.user:
-
                 return Response(
                     {
                         "message": "You cannot change your own account status."
@@ -229,6 +216,8 @@ class AdminUserStatusAPIView(APIView):
 
         except Exception as e:
 
+            transaction.set_rollback(True)
+
             return Response(
                 {
                     "success": False,
@@ -237,15 +226,25 @@ class AdminUserStatusAPIView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
 class AdminUserCreateAPIView(APIView):
 
     permission_classes = [IsAdminUser]
 
+    @transaction.atomic
     def post(self, request):
 
-        serializer = AccountSerializer(data=request.data)
+        try:
 
-        if serializer.is_valid():
+            serializer = AccountSerializer(
+                data=request.data,
+                context={"request": request},
+            )
+
+            serializer.is_valid(
+                raise_exception=True
+            )
 
             serializer.save()
 
@@ -257,8 +256,15 @@ class AdminUserCreateAPIView(APIView):
                 status=status.HTTP_201_CREATED,
             )
 
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        except Exception as e:
 
+            transaction.set_rollback(True)
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Failed to create user.",
+                    "error": str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

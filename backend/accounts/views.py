@@ -1,44 +1,58 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from .models import Address,SellerProfile,Account
-from .serializers import AccountSerializer,AddressSerializer,SellerProfileSerializer
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 
-
+from rest_framework import status
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .models import (
+    Account,
+    Address,
+    SellerProfile,
+)
+from .serializers import (
+    AccountSerializer,
+    AddressSerializer,
+    SellerProfileSerializer,
+)
+
 
 class RegisterAPIView(APIView):
 
     permission_classes = [AllowAny]
 
+    @transaction.atomic
     def post(self, request):
 
         try:
 
-            serializer = AccountSerializer(data=request.data)
+            serializer = AccountSerializer(
+                data=request.data
+            )
 
-            if serializer.is_valid():
-                serializer.save()
+            serializer.is_valid(
+                raise_exception=True
+            )
 
-                return Response(
-                    {
-                        "message": "Account created successfully.",
-                        "data": serializer.data,
-                    },
-                    status=status.HTTP_201_CREATED,
-                )
+            serializer.save()
 
             return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST,
+                {
+                    "message": "Account created successfully.",
+                    "data": serializer.data,
+                },
+                status=status.HTTP_201_CREATED,
             )
 
         except ValidationError:
             raise
 
         except Exception as e:
+
+            transaction.set_rollback(True)
+
             return Response(
                 {
                     "success": False,
@@ -48,11 +62,14 @@ class RegisterAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+
 class ProfileAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+
+        request.user.refresh_from_db()
 
         return Response(
             {
@@ -64,14 +81,25 @@ class ProfileAPIView(APIView):
                 "phone": request.user.phone,
                 "role": request.user.role,
                 "gender": request.user.gender,
+                "profile_image": (
+                    request.user.profile_image.url
+                    if request.user.profile_image
+                    else None
+                ),
+                "date_of_birth": request.user.date_of_birth,
+                "is_active": request.user.is_active,
+                "is_verified": request.user.is_verified,
+                "created_at": request.user.created_at,
             },
             status=status.HTTP_200_OK,
         )
+
 
 class UpdateProfileAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def put(self, request):
 
         try:
@@ -82,7 +110,9 @@ class UpdateProfileAPIView(APIView):
                 partial=True,
             )
 
-            serializer.is_valid(raise_exception=True)
+            serializer.is_valid(
+                raise_exception=True
+            )
 
             serializer.save()
 
@@ -98,6 +128,9 @@ class UpdateProfileAPIView(APIView):
             raise
 
         except Exception as e:
+
+            transaction.set_rollback(True)
+
             return Response(
                 {
                     "success": False,
@@ -106,20 +139,28 @@ class UpdateProfileAPIView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-        
+
 class AddressCreateAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request):
 
         try:
 
-            serializer = AddressSerializer(data=request.data)
+            serializer = AddressSerializer(
+                data=request.data,
+                context={"request": request},
+            )
 
-            serializer.is_valid(raise_exception=True)
+            serializer.is_valid(
+                raise_exception=True
+            )
 
-            serializer.save(account=request.user)
+            serializer.save(
+                account=request.user
+            )
 
             return Response(
                 {
@@ -133,6 +174,9 @@ class AddressCreateAPIView(APIView):
             raise
 
         except Exception as e:
+
+            transaction.set_rollback(True)
+
             return Response(
                 {
                     "success": False,
@@ -142,17 +186,22 @@ class AddressCreateAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+
 class AddressListAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
 
-        addresses = Address.objects.filter(account=request.user)
+        addresses = (
+            Address.objects
+            .filter(account=request.user)
+            .order_by("-is_default", "-created_at")
+        )
 
         serializer = AddressSerializer(
             addresses,
-            many=True
+            many=True,
         )
 
         return Response(
@@ -164,6 +213,7 @@ class AddressListAPIView(APIView):
             status=status.HTTP_200_OK,
         )
 
+
 class AddressDetailAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -171,9 +221,9 @@ class AddressDetailAPIView(APIView):
     def get(self, request, pk):
 
         address = get_object_or_404(
-            Address,
+            Address.objects.select_related("account"),
             pk=pk,
-            account=request.user
+            account=request.user,
         )
 
         serializer = AddressSerializer(address)
@@ -185,69 +235,73 @@ class AddressDetailAPIView(APIView):
             },
             status=status.HTTP_200_OK,
         )
-    
+
 class AddressUpdateAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def put(self, request, pk):
 
         try:
 
             address = get_object_or_404(
-                Address,
+                Address.objects.select_related("account"),
                 pk=pk,
-                account=request.user
+                account=request.user,
             )
 
             serializer = AddressSerializer(
                 address,
                 data=request.data,
-                partial=True
+                partial=True,
+                context={"request": request},
             )
 
-            if serializer.is_valid():
+            serializer.is_valid(
+                raise_exception=True
+            )
 
-                serializer.save()
-
-                return Response(
-                    {
-                        "message": "Address updated successfully.",
-                        "data": serializer.data
-                    },
-                    status=status.HTTP_200_OK
-                )
+            serializer.save()
 
             return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
+                {
+                    "message": "Address updated successfully.",
+                    "data": serializer.data,
+                },
+                status=status.HTTP_200_OK,
             )
 
         except ValidationError:
             raise
 
         except Exception as e:
+
+            transaction.set_rollback(True)
+
             return Response(
                 {
                     "success": False,
                     "message": "Failed to update address.",
-                    "error": str(e)
+                    "error": str(e),
                 },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-    
+
+
 class AddressDeleteAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def delete(self, request, pk):
 
         try:
 
             address = get_object_or_404(
-                Address,
+                Address.objects.select_related("account"),
                 pk=pk,
-                account=request.user
+                account=request.user,
             )
 
             address.delete()
@@ -256,58 +310,84 @@ class AddressDeleteAPIView(APIView):
                 {
                     "message": "Address deleted successfully."
                 },
-                status=status.HTTP_204_NO_CONTENT
+                status=status.HTTP_204_NO_CONTENT,
             )
 
         except ValidationError:
             raise
 
         except Exception as e:
+
+            transaction.set_rollback(True)
+
             return Response(
                 {
                     "success": False,
                     "message": "Failed to delete address.",
-                    "error": str(e)
+                    "error": str(e),
                 },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
 
 class SetDefaultAddressAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def patch(self, request, pk):
 
-        address = get_object_or_404(
-            Address,
-            pk=pk,
-            account=request.user
-        )
+        try:
 
-        # Remove default from all addresses of this user
-        Address.objects.filter(
-            account=request.user,
-            is_default=True
-        ).update(is_default=False)
+            address = get_object_or_404(
+                Address.objects.select_related("account"),
+                pk=pk,
+                account=request.user,
+            )
 
-        # Set selected address as default
-        address.is_default = True
-        address.save()
+            Address.objects.filter(
+                account=request.user,
+                is_default=True,
+            ).exclude(
+                pk=address.pk
+            ).update(
+                is_default=False
+            )
 
-        serializer = AddressSerializer(address)
+            address.is_default = True
+            address.save(update_fields=["is_default"])
 
-        return Response(
-            {
-                "message": "Default address updated successfully.",
-                "data": serializer.data
-            },
-            status=status.HTTP_200_OK
-        )
+            serializer = AddressSerializer(address)
+
+            return Response(
+                {
+                    "message": "Default address updated successfully.",
+                    "data": serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except ValidationError:
+            raise
+
+        except Exception as e:
+
+            transaction.set_rollback(True)
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Failed to update default address.",
+                    "error": str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 class SellerProfileCreateAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request):
 
         try:
@@ -317,47 +397,57 @@ class SellerProfileCreateAPIView(APIView):
                     {
                         "message": "Only sellers can create a seller profile."
                     },
-                    status=status.HTTP_403_FORBIDDEN
+                    status=status.HTTP_403_FORBIDDEN,
                 )
 
-            if SellerProfile.objects.filter(account=request.user).exists():
+            if SellerProfile.objects.filter(
+                account=request.user
+            ).exists():
                 return Response(
                     {
                         "message": "Seller profile already exists."
                     },
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            serializer = SellerProfileSerializer(data=request.data)
-
-            if serializer.is_valid():
-
-                serializer.save(account=request.user)
-
-                return Response(
-                    {
-                        "message": "Seller profile created successfully.",
-                        "data": serializer.data
-                    },
-                    status=status.HTTP_201_CREATED
-                )
-
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
+            serializer = SellerProfileSerializer(
+                data=request.data,
+                context={"request": request},
             )
 
+            serializer.is_valid(
+                raise_exception=True
+            )
+
+            serializer.save(
+                account=request.user
+            )
+
+            return Response(
+                {
+                    "message": "Seller profile created successfully.",
+                    "data": serializer.data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except ValidationError:
+            raise
+
         except Exception as e:
+
+            transaction.set_rollback(True)
 
             return Response(
                 {
                     "success": False,
                     "message": "Failed to create seller profile.",
-                    "error": str(e)
+                    "error": str(e),
                 },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-    
+
+
 class SellerProfileAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -365,8 +455,8 @@ class SellerProfileAPIView(APIView):
     def get(self, request):
 
         seller = get_object_or_404(
-            SellerProfile,
-            account=request.user
+            SellerProfile.objects.select_related("account"),
+            account=request.user,
         )
 
         serializer = SellerProfileSerializer(seller)
@@ -374,67 +464,76 @@ class SellerProfileAPIView(APIView):
         return Response(
             {
                 "message": "Seller profile fetched successfully.",
-                "data": serializer.data
+                "data": serializer.data,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
+
 
 class SellerProfileUpdateAPIView(APIView):
 
-
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def put(self, request):
 
         try:
 
             seller = get_object_or_404(
-                SellerProfile,
-                account=request.user
+                SellerProfile.objects.select_related("account"),
+                account=request.user,
             )
 
             serializer = SellerProfileSerializer(
                 seller,
                 data=request.data,
-                partial=True
+                partial=True,
+                context={"request": request},
             )
 
-            serializer.is_valid(raise_exception=True)
+            serializer.is_valid(
+                raise_exception=True
+            )
 
             serializer.save()
 
             return Response(
                 {
                     "message": "Seller profile updated successfully.",
-                    "data": serializer.data
+                    "data": serializer.data,
                 },
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
 
         except ValidationError:
             raise
 
         except Exception as e:
+
+            transaction.set_rollback(True)
+
             return Response(
                 {
                     "success": False,
                     "message": "Failed to update seller profile.",
-                    "error": str(e)
+                    "error": str(e),
                 },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-        
+
+
 class SellerProfileDeleteAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def delete(self, request):
 
         try:
 
             seller = get_object_or_404(
-                SellerProfile,
-                account=request.user
+                SellerProfile.objects.select_related("account"),
+                account=request.user,
             )
 
             seller.delete()
@@ -443,15 +542,21 @@ class SellerProfileDeleteAPIView(APIView):
                 {
                     "message": "Seller profile deleted successfully."
                 },
-                status=status.HTTP_204_NO_CONTENT
+                status=status.HTTP_204_NO_CONTENT,
             )
 
+        except ValidationError:
+            raise
+
         except Exception as e:
+
+            transaction.set_rollback(True)
+
             return Response(
                 {
                     "success": False,
                     "message": "Failed to delete seller profile.",
-                    "error": str(e)
+                    "error": str(e),
                 },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
