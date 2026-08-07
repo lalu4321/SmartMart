@@ -10,14 +10,37 @@ from .views import (
 
 urlpatterns = [
 
-    path("create/",BrandCreateAPIView.as_view(),name="brand-create"),
+    # ==================================
+    # Brand APIs
+    # ==================================
 
-    path("list/",BrandListAPIView.as_view(),name="brand-list"),
+    path(
+        "create/",
+        BrandCreateAPIView.as_view(),
+        name="brand-create",
+    ),
 
-    path("<int:pk>/",BrandDetailAPIView.as_view(),name="brand-detail"),
+    path(
+        "list/",
+        BrandListAPIView.as_view(),
+        name="brand-list",
+    ),
 
-    path("<int:pk>/update/",BrandUpdateAPIView.as_view(),name="brand-update"),
+    path(
+        "<int:pk>/",
+        BrandDetailAPIView.as_view(),
+        name="brand-detail",
+    ),
 
-    path("<int:pk>/delete/",BrandDeleteAPIView.as_view(),name="brand-delete"),
+    path(
+        "<int:pk>/update/",
+        BrandUpdateAPIView.as_view(),
+        name="brand-update",
+    ),
 
-]
+    path(
+        "<int:pk>/delete/",
+        BrandDeleteAPIView.as_view(),
+        name="brand-delete",
+    ),
+] 

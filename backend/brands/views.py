@@ -1,17 +1,16 @@
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils.text import slugify
-from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import AllowAny
 
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Brand
 from .serializers import BrandSerializer
+
 
 def generate_unique_slug(name, instance=None):
 
@@ -35,13 +34,19 @@ class BrandCreateAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request):
 
         try:
 
-            serializer = BrandSerializer(data=request.data)
+            serializer = BrandSerializer(
+                data=request.data,
+                context={"request": request},
+            )
 
-            serializer.is_valid(raise_exception=True)
+            serializer.is_valid(
+                raise_exception=True
+            )
 
             name = serializer.validated_data["name"]
 
@@ -52,35 +57,46 @@ class BrandCreateAPIView(APIView):
             return Response(
                 {
                     "message": "Brand created successfully.",
-                    "data": BrandSerializer(brand).data
+                    "data": BrandSerializer(
+                        brand,
+                        context={"request": request},
+                    ).data,
                 },
-                status=status.HTTP_201_CREATED
+                status=status.HTTP_201_CREATED,
             )
 
         except ValidationError:
             raise
 
         except Exception as e:
+
+            transaction.set_rollback(True)
+
             return Response(
                 {
                     "success": False,
                     "message": "Failed to create brand.",
-                    "error": str(e)
+                    "error": str(e),
                 },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-    
+
+
 class BrandListAPIView(APIView):
 
     permission_classes = [AllowAny]
 
     def get(self, request):
 
-        brands = Brand.objects.all()
+        brands = (
+            Brand.objects
+            .order_by("name")
+        )
 
         serializer = BrandSerializer(
             brands,
-            many=True
+            many=True,
+            context={"request": request},
         )
 
         return Response(
@@ -91,7 +107,8 @@ class BrandListAPIView(APIView):
             },
             status=status.HTTP_200_OK,
         )
-    
+
+
 class BrandDetailAPIView(APIView):
 
     permission_classes = [AllowAny]
@@ -101,10 +118,13 @@ class BrandDetailAPIView(APIView):
         brand = get_object_or_404(
             Brand,
             pk=pk,
-            is_active=True
+            is_active=True,
         )
 
-        serializer = BrandSerializer(brand)
+        serializer = BrandSerializer(
+            brand,
+            context={"request": request},
+        )
 
         return Response(
             {
@@ -114,40 +134,52 @@ class BrandDetailAPIView(APIView):
             status=status.HTTP_200_OK,
         )
 
+
 class BrandUpdateAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def put(self, request, pk):
 
         try:
 
             brand = get_object_or_404(
                 Brand,
-                pk=pk
+                pk=pk,
             )
 
             serializer = BrandSerializer(
                 brand,
                 data=request.data,
-                partial=True
+                partial=True,
+                context={"request": request},
             )
 
-            serializer.is_valid(raise_exception=True)
+            serializer.is_valid(
+                raise_exception=True
+            )
 
             brand = serializer.save()
 
             if "name" in serializer.validated_data:
+
                 brand.slug = generate_unique_slug(
                     brand.name,
-                    brand
+                    brand,
                 )
-                brand.save(update_fields=["slug"])
+
+                brand.save(
+                    update_fields=["slug"]
+                )
 
             return Response(
                 {
                     "message": "Brand updated successfully.",
-                    "data": BrandSerializer(brand).data,
+                    "data": BrandSerializer(
+                        brand,
+                        context={"request": request},
+                    ).data,
                 },
                 status=status.HTTP_200_OK,
             )
@@ -156,26 +188,31 @@ class BrandUpdateAPIView(APIView):
             raise
 
         except Exception as e:
+
+            transaction.set_rollback(True)
+
             return Response(
                 {
                     "success": False,
                     "message": "Failed to update brand.",
-                    "error": str(e)
+                    "error": str(e),
                 },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-        
+
+
 class BrandDeleteAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def delete(self, request, pk):
 
         try:
 
             brand = get_object_or_404(
                 Brand,
-                pk=pk
+                pk=pk,
             )
 
             brand.delete()
@@ -184,18 +221,21 @@ class BrandDeleteAPIView(APIView):
                 {
                     "message": "Brand deleted successfully."
                 },
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
 
         except ValidationError:
             raise
 
         except Exception as e:
+
+            transaction.set_rollback(True)
+
             return Response(
                 {
                     "success": False,
                     "message": "Failed to delete brand.",
-                    "error": str(e)
+                    "error": str(e),
                 },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
