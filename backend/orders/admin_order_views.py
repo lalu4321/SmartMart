@@ -1,10 +1,10 @@
-from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
 from rest_framework import status
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from notifications.models import Notification
 
@@ -19,18 +19,27 @@ from .admin_order_serializers import (
 )
 
 
+# ==========================================================
+# Admin Order List API
+# ==========================================================
+
 class AdminOrderListAPIView(APIView):
 
     permission_classes = [IsAdminUser]
 
     def get(self, request):
 
-        orders = Order.objects.select_related(
-            "account",
-            "shipping_address"
-        ).prefetch_related(
-            "items",
-            "status_history"
+        orders = (
+            Order.objects
+            .select_related(
+                "account",
+                "shipping_address",
+            )
+            .prefetch_related(
+                "items",
+                "items__variant",
+                "status_history",
+            )
         )
 
         search = request.query_params.get("search")
@@ -57,10 +66,14 @@ class AdminOrderListAPIView(APIView):
                 status=status_filter
             )
 
+        orders = orders.order_by("-created_at")
+
         serializer = AdminOrderSerializer(
-            orders.order_by("-created_at"),
+            orders,
             many=True,
-            context={"request": request},
+            context={
+                "request": request,
+            },
         )
 
         return Response(
@@ -72,6 +85,11 @@ class AdminOrderListAPIView(APIView):
             status=status.HTTP_200_OK,
         )
 
+
+# ==========================================================
+# Admin Order Detail API
+# ==========================================================
+
 class AdminOrderDetailAPIView(APIView):
 
     permission_classes = [IsAdminUser]
@@ -79,21 +97,24 @@ class AdminOrderDetailAPIView(APIView):
     def get(self, request, pk):
 
         order = get_object_or_404(
-            Order.objects.select_related(
+            Order.objects
+            .select_related(
                 "account",
-                "shipping_address"
-            ).prefetch_related(
+                "shipping_address",
+            )
+            .prefetch_related(
                 "items",
-                "status_history"
+                "items__variant",
+                "status_history",
             ),
-            pk=pk
+            pk=pk,
         )
 
         serializer = AdminOrderSerializer(
             order,
             context={
-                "request": request
-            }
+                "request": request,
+            },
         )
 
         return Response(
@@ -103,6 +124,11 @@ class AdminOrderDetailAPIView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+# ==========================================================
+# Admin Update Order Status API
+# ==========================================================
 
 class AdminOrderStatusAPIView(APIView):
 
@@ -114,15 +140,15 @@ class AdminOrderStatusAPIView(APIView):
 
             order = get_object_or_404(
                 Order,
-                pk=pk
+                pk=pk,
             )
 
             serializer = AdminOrderStatusSerializer(
-                data=request.data
+                data=request.data,
             )
 
             serializer.is_valid(
-                raise_exception=True
+                raise_exception=True,
             )
 
             new_status = serializer.validated_data["status"]
@@ -130,25 +156,38 @@ class AdminOrderStatusAPIView(APIView):
             order.status = new_status
 
             order.save(
-                update_fields=["status"]
+                update_fields=[
+                    "status",
+                ]
             )
 
             OrderStatusHistory.objects.create(
                 order=order,
                 status=new_status,
-                remarks=f"Order status updated to {new_status} by admin."
+                remarks=(
+                    f"Order status updated "
+                    f"to {new_status} by admin."
+                ),
             )
 
             Notification.objects.create(
                 account=order.account,
                 title="Order Status Updated",
-                message=f"Your order {order.order_number} status has been updated to {new_status}.",
-                notification_type=Notification.NotificationType.ORDER
+                message=(
+                    f"Your order "
+                    f"{order.order_number} "
+                    f"status has been updated "
+                    f"to {new_status}."
+                ),
+                notification_type=(
+                    Notification.NotificationType.ORDER
+                ),
             )
 
             return Response(
                 {
-                    "message": "Order status updated successfully.",
+                    "message":
+                    "Order status updated successfully.",
                     "data": {
                         "id": order.id,
                         "order_number": order.order_number,
@@ -163,11 +202,17 @@ class AdminOrderStatusAPIView(APIView):
             return Response(
                 {
                     "success": False,
-                    "message": "Failed to update order status.",
+                    "message":
+                    "Failed to update order status.",
                     "error": str(e),
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+# ==========================================================
+# Admin Delete Order API
+# ==========================================================
 
 class AdminOrderDeleteAPIView(APIView):
 
@@ -179,7 +224,7 @@ class AdminOrderDeleteAPIView(APIView):
 
             order = get_object_or_404(
                 Order,
-                pk=pk
+                pk=pk,
             )
 
             order_number = order.order_number
@@ -188,7 +233,8 @@ class AdminOrderDeleteAPIView(APIView):
 
             return Response(
                 {
-                    "message": f"Order {order_number} deleted successfully."
+                    "message":
+                    f"Order {order_number} deleted successfully."
                 },
                 status=status.HTTP_200_OK,
             )
@@ -198,7 +244,8 @@ class AdminOrderDeleteAPIView(APIView):
             return Response(
                 {
                     "success": False,
-                    "message": "Failed to delete order.",
+                    "message":
+                    "Failed to delete order.",
                     "error": str(e),
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,

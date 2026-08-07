@@ -7,20 +7,20 @@ from .models import (
 )
 
 
-# ==========================================
-# Order Item Serializer
-# ==========================================
+# ==========================================================
+# Admin Order Item Serializer
+# ==========================================================
 
 class AdminOrderItemSerializer(serializers.ModelSerializer):
 
     product_name = serializers.CharField(
         source="variant.product.name",
-        read_only=True
+        read_only=True,
     )
 
     variant_name = serializers.CharField(
         source="variant.variant_name",
-        read_only=True
+        read_only=True,
     )
 
     class Meta:
@@ -36,10 +36,16 @@ class AdminOrderItemSerializer(serializers.ModelSerializer):
             "total_price",
         )
 
+        read_only_fields = (
+            "id",
+            "product_name",
+            "variant_name",
+        )
 
-# ==========================================
-# Status History Serializer
-# ==========================================
+
+# ==========================================================
+# Admin Order Status History Serializer
+# ==========================================================
 
 class AdminOrderStatusHistorySerializer(serializers.ModelSerializer):
 
@@ -54,61 +60,66 @@ class AdminOrderStatusHistorySerializer(serializers.ModelSerializer):
             "created_at",
         )
 
+        read_only_fields = (
+            "id",
+            "created_at",
+        )
 
-# ==========================================
-# Order Serializer
-# ==========================================
+
+# ==========================================================
+# Admin Order Serializer
+# ==========================================================
 
 class AdminOrderSerializer(serializers.ModelSerializer):
 
     customer_name = serializers.CharField(
         source="account.username",
-        read_only=True
+        read_only=True,
     )
 
     customer_email = serializers.CharField(
         source="account.email",
-        read_only=True
+        read_only=True,
     )
 
     customer_phone = serializers.CharField(
         source="account.phone",
-        read_only=True
+        read_only=True,
     )
 
     shipping_name = serializers.CharField(
         source="shipping_address.full_name",
-        read_only=True
+        read_only=True,
     )
 
     shipping_phone = serializers.CharField(
         source="shipping_address.phone",
-        read_only=True
+        read_only=True,
     )
 
     shipping_city = serializers.CharField(
         source="shipping_address.city",
-        read_only=True
+        read_only=True,
     )
 
     shipping_state = serializers.CharField(
         source="shipping_address.state",
-        read_only=True
+        read_only=True,
     )
 
     shipping_pincode = serializers.CharField(
         source="shipping_address.pincode",
-        read_only=True
+        read_only=True,
     )
 
     items = AdminOrderItemSerializer(
         many=True,
-        read_only=True
+        read_only=True,
     )
 
     status_history = AdminOrderStatusHistorySerializer(
         many=True,
-        read_only=True
+        read_only=True,
     )
 
     class Meta:
@@ -134,10 +145,26 @@ class AdminOrderSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
+        read_only_fields = (
+            "id",
+            "order_number",
+            "customer_name",
+            "customer_email",
+            "customer_phone",
+            "shipping_name",
+            "shipping_phone",
+            "shipping_city",
+            "shipping_state",
+            "shipping_pincode",
+            "total_amount",
+            "created_at",
+            "updated_at",
+        )
 
-# ==========================================
-# Update Status Serializer
-# ==========================================
+
+# ==========================================================
+# Admin Update Order Status Serializer
+# ==========================================================
 
 class AdminOrderStatusSerializer(serializers.Serializer):
 
