@@ -1,16 +1,23 @@
-from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
 from rest_framework import status
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .models import Review
+from .models import (
+    Review,
+)
+
 from .admin_review_serializers import (
     AdminReviewSerializer,
 )
 
+
+# ==========================================================
+# Admin Review List API
+# ==========================================================
 
 class AdminReviewListAPIView(APIView):
 
@@ -18,9 +25,12 @@ class AdminReviewListAPIView(APIView):
 
     def get(self, request):
 
-        reviews = Review.objects.select_related(
-            "account",
-            "product"
+        reviews = (
+            Review.objects
+            .select_related(
+                "account",
+                "product",
+            )
         )
 
         search = request.query_params.get("search")
@@ -44,12 +54,16 @@ class AdminReviewListAPIView(APIView):
         if rating:
 
             reviews = reviews.filter(
-                rating=rating
+                rating=rating,
             )
 
+        reviews = reviews.order_by(
+            "-created_at",
+        )
+
         serializer = AdminReviewSerializer(
-            reviews.order_by("-created_at"),
-            many=True
+            reviews,
+            many=True,
         )
 
         return Response(
@@ -61,6 +75,11 @@ class AdminReviewListAPIView(APIView):
             status=status.HTTP_200_OK,
         )
 
+
+# ==========================================================
+# Admin Review Detail API
+# ==========================================================
+
 class AdminReviewDetailAPIView(APIView):
 
     permission_classes = [IsAdminUser]
@@ -70,13 +89,13 @@ class AdminReviewDetailAPIView(APIView):
         review = get_object_or_404(
             Review.objects.select_related(
                 "account",
-                "product"
+                "product",
             ),
-            pk=pk
+            pk=pk,
         )
 
         serializer = AdminReviewSerializer(
-            review
+            review,
         )
 
         return Response(
@@ -86,6 +105,11 @@ class AdminReviewDetailAPIView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+# ==========================================================
+# Admin Review Delete API
+# ==========================================================
 
 class AdminReviewDeleteAPIView(APIView):
 
@@ -97,14 +121,15 @@ class AdminReviewDeleteAPIView(APIView):
 
             review = get_object_or_404(
                 Review,
-                pk=pk
+                pk=pk,
             )
 
             review.delete()
 
             return Response(
                 {
-                    "message": "Review deleted successfully."
+                    "message":
+                    "Review deleted successfully."
                 },
                 status=status.HTTP_200_OK,
             )
@@ -114,10 +139,9 @@ class AdminReviewDeleteAPIView(APIView):
             return Response(
                 {
                     "success": False,
-                    "message": "Failed to delete review.",
+                    "message":
+                    "Failed to delete review.",
                     "error": str(e),
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-    

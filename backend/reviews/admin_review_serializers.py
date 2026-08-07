@@ -1,27 +1,29 @@
 from rest_framework import serializers
 
-from .models import Review
+from .models import (
+    Review,
+)
 
 
-# ==========================================
+# ==========================================================
 # Admin Review Serializer
-# ==========================================
+# ==========================================================
 
 class AdminReviewSerializer(serializers.ModelSerializer):
 
     customer_name = serializers.CharField(
         source="account.username",
-        read_only=True
+        read_only=True,
     )
 
     customer_email = serializers.CharField(
         source="account.email",
-        read_only=True
+        read_only=True,
     )
 
     product_name = serializers.CharField(
         source="product.name",
-        read_only=True
+        read_only=True,
     )
 
     class Meta:
@@ -43,6 +45,9 @@ class AdminReviewSerializer(serializers.ModelSerializer):
 
         read_only_fields = (
             "id",
+            "product_name",
+            "customer_name",
+            "customer_email",
             "created_at",
             "updated_at",
         )
