@@ -1,16 +1,29 @@
 from rest_framework import serializers
 
-from .models import Cart, CartItem
-from products.serializers import ProductVariantSerializer
+from .models import (
+    Cart,
+    CartItem,
+)
 
+from products.serializers import (
+    ProductVariantSerializer,
+)
+
+
+# ==========================================================
+# Cart Item Serializer
+# ==========================================================
 
 class CartItemSerializer(serializers.ModelSerializer):
 
-    variant = ProductVariantSerializer(read_only=True)
+    variant = ProductVariantSerializer(
+        read_only=True,
+    )
 
     total_price = serializers.ReadOnlyField()
 
     class Meta:
+
         model = CartItem
 
         fields = (
@@ -20,6 +33,16 @@ class CartItemSerializer(serializers.ModelSerializer):
             "total_price",
         )
 
+        read_only_fields = (
+            "id",
+            "variant",
+            "total_price",
+        )
+
+
+# ==========================================================
+# Cart Serializer
+# ==========================================================
 
 class CartSerializer(serializers.ModelSerializer):
 
@@ -29,6 +52,7 @@ class CartSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
+
         model = Cart
 
         fields = (
