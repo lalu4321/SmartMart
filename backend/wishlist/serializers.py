@@ -1,12 +1,8 @@
 from rest_framework import serializers
 
-from .models import (
-    Wishlist,
-)
+from .models import Wishlist
 
-from products.models import (
-    ProductImage,
-)
+from products.models import ProductImage, ProductVariant
 
 
 # ==========================================================
@@ -20,12 +16,14 @@ class WishlistSerializer(serializers.ModelSerializer):
         read_only=True,
     )
 
+
     product_price = serializers.DecimalField(
         source="product.price",
         max_digits=10,
         decimal_places=2,
         read_only=True,
     )
+
 
     product_discount_price = serializers.DecimalField(
         source="product.discount_price",
@@ -34,7 +32,14 @@ class WishlistSerializer(serializers.ModelSerializer):
         read_only=True,
     )
 
+
     product_image = serializers.SerializerMethodField()
+
+
+    # ADD THIS
+    variant = serializers.SerializerMethodField()
+
+
 
     class Meta:
 
@@ -44,12 +49,17 @@ class WishlistSerializer(serializers.ModelSerializer):
             "id",
             "account",
             "product",
+
+            "variant",
+
             "product_name",
             "product_price",
             "product_discount_price",
             "product_image",
+
             "created_at",
         )
+
 
         read_only_fields = (
             "id",
@@ -57,16 +67,35 @@ class WishlistSerializer(serializers.ModelSerializer):
             "created_at",
         )
 
-    def get_product_image(self, obj):
+
+
+    def get_variant(self,obj):
+
+        variant = ProductVariant.objects.filter(
+            product=obj.product
+        ).first()
+
+
+        if variant:
+            return variant.id
+
+
+        return None
+
+
+
+    def get_product_image(self,obj):
 
         image = ProductImage.objects.filter(
             product=obj.product,
             is_primary=True,
         ).first()
 
+
         if image:
 
             request = self.context.get("request")
+
 
             if request:
 
@@ -74,6 +103,8 @@ class WishlistSerializer(serializers.ModelSerializer):
                     image.image.url
                 )
 
+
             return image.image.url
 
-        return None 
+
+        return None
