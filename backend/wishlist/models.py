@@ -2,7 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 
 from accounts.models import Account
-from products.models import Product
+from products.models import Product, ProductVariant
 
 from .validators import (
     validate_product,
@@ -21,33 +21,45 @@ class Wishlist(models.Model):
         related_name="wishlist_items"
     )
 
+
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
         related_name="wishlisted_by"
     )
 
+
+    variant = models.ForeignKey(
+        ProductVariant,
+        on_delete=models.CASCADE,
+        related_name="wishlist_variants",
+        null=True,
+        blank=True
+    )
+
+
     created_at = models.DateTimeField(
         auto_now_add=True
     )
+
 
     class Meta:
 
         ordering = ["-created_at"]
 
-        verbose_name = "Wishlist"
-
-        verbose_name_plural = "Wishlist"
-
         constraints = [
+
             models.UniqueConstraint(
                 fields=[
                     "account",
                     "product",
+                    "variant",
                 ],
-                name="unique_account_product_wishlist",
+                name="unique_account_product_variant_wishlist",
             ),
+
         ]
+
 
     def clean(self):
 
@@ -57,11 +69,13 @@ class Wishlist(models.Model):
             self.product
         )
 
-    def save(self, *args, **kwargs):
+
+    def save(self,*args,**kwargs):
 
         self.full_clean()
 
-        super().save(*args, **kwargs)
+        super().save(*args,**kwargs)
+
 
     def __str__(self):
 
