@@ -1,17 +1,22 @@
 from django.shortcuts import get_object_or_404
 
-from rest_framework.views import APIView
+from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.views import APIView
 
-from .models import ContactMessage
-from .serializers import ContactMessageSerializer
+from .models import (
+    ContactMessage,
+)
+
+from .serializers import (
+    ContactMessageSerializer,
+)
 
 
-# ==========================================
+# ==========================================================
 # Submit Contact Message
-# ==========================================
+# ==========================================================
 
 class ContactCreateAPIView(APIView):
 
@@ -20,27 +25,28 @@ class ContactCreateAPIView(APIView):
     def post(self, request):
 
         serializer = ContactMessageSerializer(
-            data=request.data
+            data=request.data,
         )
 
         serializer.is_valid(
-            raise_exception=True
+            raise_exception=True,
         )
 
         serializer.save()
 
         return Response(
             {
-                "message": "Message sent successfully.",
-                "data": serializer.data,
+                "message":
+                "Message sent successfully.",
+                "data":
+                serializer.data,
             },
             status=status.HTTP_201_CREATED,
         )
 
-
-# ==========================================
-# Contact Detail
-# ==========================================
+# ==========================================================
+# Contact Detail API
+# ==========================================================
 
 class ContactDetailAPIView(APIView):
 
@@ -50,17 +56,19 @@ class ContactDetailAPIView(APIView):
 
         contact = get_object_or_404(
             ContactMessage,
-            pk=pk
+            pk=pk,
         )
 
         serializer = ContactMessageSerializer(
-            contact
+            contact,
         )
 
         return Response(
             {
-                "message": "Contact message fetched successfully.",
-                "data": serializer.data,
+                "message":
+                "Contact message fetched successfully.",
+                "data":
+                serializer.data,
             },
             status=status.HTTP_200_OK,
         )

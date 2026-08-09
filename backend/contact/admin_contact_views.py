@@ -1,17 +1,22 @@
 from django.shortcuts import get_object_or_404
 
-from rest_framework.views import APIView
+from rest_framework import status
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.views import APIView
 
-from .models import ContactMessage
-from .admin_contact_serializers import AdminContactSerializer
+from .models import (
+    ContactMessage,
+)
+
+from .admin_contact_serializers import (
+    AdminContactSerializer,
+)
 
 
-# ==========================================
-# Admin Contact List
-# ==========================================
+# ==========================================================
+# Admin Contact List API
+# ==========================================================
 
 class AdminContactListAPIView(APIView):
 
@@ -19,26 +24,34 @@ class AdminContactListAPIView(APIView):
 
     def get(self, request):
 
-        contacts = ContactMessage.objects.all()
+        contacts = (
+            ContactMessage.objects
+            .order_by(
+                "-created_at",
+            )
+        )
 
         serializer = AdminContactSerializer(
             contacts,
-            many=True
+            many=True,
         )
 
         return Response(
             {
-                "message": "Contact messages fetched successfully.",
-                "count": contacts.count(),
-                "data": serializer.data,
+                "message":
+                "Contact messages fetched successfully.",
+                "count":
+                contacts.count(),
+                "data":
+                serializer.data,
             },
             status=status.HTTP_200_OK,
         )
 
 
-# ==========================================
-# Admin Contact Detail
-# ==========================================
+# ==========================================================
+# Admin Contact Detail API
+# ==========================================================
 
 class AdminContactDetailAPIView(APIView):
 
@@ -48,23 +61,27 @@ class AdminContactDetailAPIView(APIView):
 
         contact = get_object_or_404(
             ContactMessage,
-            pk=pk
+            pk=pk,
         )
 
-        serializer = AdminContactSerializer(contact)
+        serializer = AdminContactSerializer(
+            contact,
+        )
 
         return Response(
             {
-                "message": "Contact message fetched successfully.",
-                "data": serializer.data,
+                "message":
+                "Contact message fetched successfully.",
+                "data":
+                serializer.data,
             },
             status=status.HTTP_200_OK,
         )
 
 
-# ==========================================
-# Admin Mark as Read
-# ==========================================
+# ==========================================================
+# Admin Mark Contact Read / Unread API
+# ==========================================================
 
 class AdminContactReadAPIView(APIView):
 
@@ -74,13 +91,17 @@ class AdminContactReadAPIView(APIView):
 
         contact = get_object_or_404(
             ContactMessage,
-            pk=pk
+            pk=pk,
         )
 
-        contact.is_read = not contact.is_read
+        contact.is_read = (
+            not contact.is_read
+        )
 
         contact.save(
-            update_fields=["is_read"]
+            update_fields=[
+                "is_read",
+            ]
         )
 
         return Response(
@@ -100,9 +121,9 @@ class AdminContactReadAPIView(APIView):
         )
 
 
-# ==========================================
-# Admin Delete Contact
-# ==========================================
+# ==========================================================
+# Admin Delete Contact API
+# ==========================================================
 
 class AdminContactDeleteAPIView(APIView):
 
@@ -112,14 +133,15 @@ class AdminContactDeleteAPIView(APIView):
 
         contact = get_object_or_404(
             ContactMessage,
-            pk=pk
+            pk=pk,
         )
 
         contact.delete()
 
         return Response(
             {
-                "message": "Contact message deleted successfully."
+                "message":
+                "Contact message deleted successfully."
             },
             status=status.HTTP_200_OK,
         )
