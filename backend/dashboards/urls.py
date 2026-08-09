@@ -9,28 +9,17 @@ from .views import (
 
 urlpatterns = [
 
-    path(
-        "dashboard/",
-        AdminDashboardAPIView.as_view(),
-        name="admin-dashboard",
-    ),
+    # ==================================
+    # Admin Dashboard API
+    # ==================================
 
-    path(
-        "profile/",
-        AdminProfileAPIView.as_view(),
-        name="admin-profile",
-    ),
+    path("dashboard/", AdminDashboardAPIView.as_view(), name="admin-dashboard"),
 
-    path(
-        "change-password/",
-        ChangePasswordAPIView.as_view(),
-        name="change-password",
-    ),
+    # ==================================
+    # Admin Profile APIs
+    # ==================================
 
-    path(
-        "profile-image/",
-        UpdateProfileImageAPIView.as_view(),
-        name="profile-image",
-    ),
-
+    path("profile/", AdminProfileAPIView.as_view(), name="admin-profile"),
+    path("change-password/", ChangePasswordAPIView.as_view(), name="change-password"),
+    path("profile-image/", UpdateProfileImageAPIView.as_view(), name="profile-image"),
 ]
