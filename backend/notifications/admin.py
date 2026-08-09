@@ -1,5 +1,45 @@
 from django.contrib import admin
 
-from .models import Notification
+from .models import (
+    Notification,
+)
 
-admin.site.register(Notification)
+
+# ==========================================================
+# Notification Admin
+# ==========================================================
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "account",
+        "title",
+        "notification_type",
+        "is_read",
+        "created_at",
+    )
+
+    list_filter = (
+        "notification_type",
+        "is_read",
+        "created_at",
+    )
+
+    search_fields = (
+        "account__username",
+        "account__email",
+        "title",
+        "message",
+    )
+
+    readonly_fields = (
+        "created_at",
+    )
+
+    ordering = (
+        "-created_at",
+    )
+
+    list_per_page = 25

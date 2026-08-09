@@ -1,13 +1,19 @@
 from rest_framework import serializers
 
-from .models import Notification
+from .models import (
+    Notification,
+)
 
+
+# ==========================================================
+# Admin Notification Serializer
+# ==========================================================
 
 class AdminNotificationSerializer(serializers.ModelSerializer):
 
     username = serializers.CharField(
         source="account.username",
-        read_only=True
+        read_only=True,
     )
 
     class Meta:
@@ -22,5 +28,11 @@ class AdminNotificationSerializer(serializers.ModelSerializer):
             "message",
             "notification_type",
             "is_read",
+            "created_at",
+        )
+
+        read_only_fields = (
+            "id",
+            "username",
             "created_at",
         )

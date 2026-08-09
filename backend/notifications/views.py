@@ -1,14 +1,23 @@
-from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 
-from rest_framework.views import APIView
+from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.views import APIView
 
-from .models import Notification
-from .serializers import NotificationSerializer
+from .models import (
+    Notification,
+)
 
+from .serializers import (
+    NotificationSerializer,
+)
+
+
+# ==========================================================
+# Notification List API
+# ==========================================================
 
 class NotificationListAPIView(APIView):
 
@@ -16,24 +25,40 @@ class NotificationListAPIView(APIView):
 
     def get(self, request):
 
-        notifications = Notification.objects.filter(
-            account=request.user
+        notifications = (
+            Notification.objects
+            .filter(
+                account=request.user,
+            )
+            .order_by(
+                "-created_at",
+            )
         )
 
         serializer = NotificationSerializer(
             notifications,
-            many=True
+            many=True,
+            context={
+                "request": request,
+            },
         )
 
         return Response(
             {
-                "message": "Notifications fetched successfully.",
-                "count": notifications.count(),
-                "data": serializer.data
+                "message":
+                "Notifications fetched successfully.",
+                "count":
+                notifications.count(),
+                "data":
+                serializer.data,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
-    
+
+# ==========================================================
+# Notification Detail API
+# ==========================================================
+
 class NotificationDetailAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -43,21 +68,31 @@ class NotificationDetailAPIView(APIView):
         notification = get_object_or_404(
             Notification,
             pk=pk,
-            account=request.user
+            account=request.user,
         )
 
         serializer = NotificationSerializer(
-            notification
+            notification,
+            context={
+                "request": request,
+            },
         )
 
         return Response(
             {
-                "message": "Notification fetched successfully.",
-                "data": serializer.data
+                "message":
+                "Notification fetched successfully.",
+                "data":
+                serializer.data,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
-    
+
+
+# ==========================================================
+# Mark Notification As Read API
+# ==========================================================
+
 class NotificationMarkAsReadAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -67,18 +102,28 @@ class NotificationMarkAsReadAPIView(APIView):
         notification = get_object_or_404(
             Notification,
             pk=pk,
-            account=request.user
+            account=request.user,
         )
 
         notification.is_read = True
-        notification.save(update_fields=["is_read"])
+
+        notification.save(
+            update_fields=[
+                "is_read",
+            ]
+        )
 
         return Response(
             {
-                "message": "Notification marked as read."
+                "message":
+                "Notification marked as read."
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
+
+# ==========================================================
+# Mark All Notifications As Read API
+# ==========================================================
 
 class NotificationMarkAllAsReadAPIView(APIView):
 
@@ -88,18 +133,23 @@ class NotificationMarkAllAsReadAPIView(APIView):
 
         Notification.objects.filter(
             account=request.user,
-            is_read=False
+            is_read=False,
         ).update(
-            is_read=True
+            is_read=True,
         )
 
         return Response(
             {
-                "message": "All notifications marked as read."
+                "message":
+                "All notifications marked as read."
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
-    
+
+
+# ==========================================================
+# Delete Notification API
+# ==========================================================
 
 class NotificationDeleteAPIView(APIView):
 
@@ -108,30 +158,35 @@ class NotificationDeleteAPIView(APIView):
     def delete(self, request, pk):
 
         try:
+
             notification = get_object_or_404(
                 Notification,
                 pk=pk,
-                account=request.user
+                account=request.user,
             )
 
             notification.delete()
 
             return Response(
                 {
-                    "message": "Notification deleted successfully."
+                    "message":
+                    "Notification deleted successfully."
                 },
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
 
         except ValidationError:
+
             raise
 
         except Exception as e:
+
             return Response(
                 {
                     "success": False,
-                    "message": "Failed to delete notification.",
-                    "error": str(e)
+                    "message":
+                    "Failed to delete notification.",
+                    "error": str(e),
                 },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
