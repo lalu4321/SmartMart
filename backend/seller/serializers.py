@@ -3,8 +3,13 @@ from rest_framework import serializers
 from orders.models import (
     Order,
     OrderItem,
+    ReturnRequest,
 )
 
+
+# ==========================================================
+# Seller Order Item Serializer
+# ==========================================================
 
 class SellerOrderItemSerializer(serializers.ModelSerializer):
 
@@ -21,11 +26,15 @@ class SellerOrderItemSerializer(serializers.ModelSerializer):
         )
 
 
+# ==========================================================
+# Seller Order Serializer
+# ==========================================================
+
 class SellerOrderSerializer(serializers.ModelSerializer):
 
     items = SellerOrderItemSerializer(
         many=True,
-        read_only=True
+        read_only=True,
     )
 
     class Meta:
@@ -43,14 +52,21 @@ class SellerOrderSerializer(serializers.ModelSerializer):
             "created_at",
         )
 
+
+# ==========================================================
+# Update Order Status Serializer
+# ==========================================================
+
 class UpdateOrderStatusSerializer(serializers.Serializer):
 
     status = serializers.ChoiceField(
-        choices=Order.OrderStatus.choices
+        choices=Order.OrderStatus.choices,
     )
 
-from orders.models import ReturnRequest
 
+# ==========================================================
+# Seller Return Request Serializer
+# ==========================================================
 
 class SellerReturnRequestSerializer(serializers.ModelSerializer):
 
