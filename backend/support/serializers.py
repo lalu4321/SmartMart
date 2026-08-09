@@ -6,6 +6,10 @@ from .models import (
 )
 
 
+# ==========================================================
+# Support Ticket Serializer
+# ==========================================================
+
 class SupportTicketSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -31,6 +35,10 @@ class SupportTicketSerializer(serializers.ModelSerializer):
         )
 
 
+# ==========================================================
+# Ticket Reply Serializer
+# ==========================================================
+
 class TicketReplySerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -47,7 +55,7 @@ class TicketReplySerializer(serializers.ModelSerializer):
 
         read_only_fields = (
             "id",
-            "ticket", 
+            "ticket",
             "account",
             "created_at",
         )

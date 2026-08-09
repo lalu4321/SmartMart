@@ -13,14 +13,21 @@ from .views import (
 )
 
 urlpatterns = [
-    # Customer APIs
+
+    # ==================================
+    # Customer Support APIs
+    # ==================================
+
     path("", SupportTicketCreateAPIView.as_view(), name="support-create"),
     path("list/", SupportTicketListAPIView.as_view(), name="support-list"),
     path("<int:pk>/", SupportTicketDetailAPIView.as_view(), name="support-detail"),
     path("<int:pk>/update/", SupportTicketUpdateAPIView.as_view(), name="support-update"),
     path("<int:pk>/close/", SupportTicketCloseAPIView.as_view(), name="support-close"),
 
-    # Admin APIs
+    # ==================================
+    # Admin Support APIs
+    # ==================================
+
     path("admin/", AdminSupportTicketListAPIView.as_view(), name="admin-support-list"),
     path("admin/<int:pk>/", AdminSupportTicketDetailAPIView.as_view(), name="admin-support-detail"),
     path("admin/<int:pk>/reply/", TicketReplyAPIView.as_view(), name="ticket-reply"),

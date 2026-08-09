@@ -1,157 +1,251 @@
 from django.shortcuts import get_object_or_404
 
-from rest_framework.views import APIView
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.views import APIView
+
 
 from .models import (
     SupportTicket,
     TicketReply,
 )
 
+
 from .serializers import (
     SupportTicketSerializer,
     TicketReplySerializer,
 )
 
+
+
+# ==========================================================
+# Create Support Ticket API
+# ==========================================================
+
 class SupportTicketCreateAPIView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsAuthenticated
+    ]
+
 
     def post(self, request):
 
         serializer = SupportTicketSerializer(
-            data=request.data
+            data=request.data,
         )
 
-        serializer.is_valid(raise_exception=True)
+
+        serializer.is_valid(
+            raise_exception=True,
+        )
+
 
         ticket = serializer.save(
-            account=request.user
+            account=request.user,
         )
+
 
         return Response(
             {
-                "message": "Support ticket created successfully.",
-                "data": SupportTicketSerializer(ticket).data
+                "message":
+                "Support ticket created successfully.",
+
+                "data":
+                SupportTicketSerializer(
+                    ticket
+                ).data,
             },
-            status=status.HTTP_201_CREATED
+            status=status.HTTP_201_CREATED,
         )
-    
+
+
+
+# ==========================================================
+# Support Ticket List API
+# ==========================================================
+
 class SupportTicketListAPIView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsAuthenticated
+    ]
+
 
     def get(self, request):
 
         tickets = SupportTicket.objects.filter(
-            account=request.user
+            account=request.user,
         )
+
 
         serializer = SupportTicketSerializer(
             tickets,
-            many=True
+            many=True,
         )
+
 
         return Response(
             {
-                "message": "Support tickets fetched successfully.",
-                "count": tickets.count(),
-                "data": serializer.data
+                "message":
+                "Support tickets fetched successfully.",
+
+                "count":
+                tickets.count(),
+
+                "data":
+                serializer.data,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
-    
+
+# ==========================================================
+# Support Ticket Detail API
+# ==========================================================
+
 class SupportTicketDetailAPIView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsAuthenticated
+    ]
+
 
     def get(self, request, pk):
 
         ticket = get_object_or_404(
             SupportTicket,
             pk=pk,
-            account=request.user
+            account=request.user,
         )
 
+
         serializer = SupportTicketSerializer(
-            ticket
+            ticket,
         )
+
 
         return Response(
             {
-                "message": "Support ticket fetched successfully.",
-                "data": serializer.data
+                "message":
+                "Support ticket fetched successfully.",
+
+                "data":
+                serializer.data,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
+
+
+
+# ==========================================================
+# Update Support Ticket API
+# ==========================================================
 
 class SupportTicketUpdateAPIView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsAuthenticated
+    ]
+
 
     def put(self, request, pk):
 
         ticket = get_object_or_404(
             SupportTicket,
             pk=pk,
-            account=request.user
+            account=request.user,
         )
+
 
         if ticket.status == SupportTicket.Status.CLOSED:
 
             return Response(
                 {
-                    "message": "Closed tickets cannot be updated."
+                    "message":
+                    "Closed tickets cannot be updated."
                 },
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
+
+
 
         serializer = SupportTicketSerializer(
             ticket,
             data=request.data,
-            partial=True
+            partial=True,
         )
 
-        serializer.is_valid(raise_exception=True)
+
+        serializer.is_valid(
+            raise_exception=True,
+        )
+
 
         serializer.save()
 
+
+
         return Response(
             {
-                "message": "Support ticket updated successfully.",
-                "data": serializer.data
+                "message":
+                "Support ticket updated successfully.",
+
+                "data":
+                serializer.data,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
-    
+
+
+
+# ==========================================================
+# Close Support Ticket API
+# ==========================================================
+
 class SupportTicketCloseAPIView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsAuthenticated
+    ]
+
 
     def put(self, request, pk):
 
         ticket = get_object_or_404(
             SupportTicket,
             pk=pk,
-            account=request.user
+            account=request.user,
         )
 
-        ticket.status = SupportTicket.Status.CLOSED
+
+        ticket.status = (
+            SupportTicket.Status.CLOSED
+        )
+
 
         ticket.save()
 
+
+
         return Response(
             {
-                "message": "Support ticket closed successfully."
+                "message":
+                "Support ticket closed successfully."
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
-    
+
+# ==========================================================
+# Admin Support Ticket List API
+# ==========================================================
+
 class AdminSupportTicketListAPIView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsAuthenticated
+    ]
+
 
     def get(self, request):
 
@@ -159,30 +253,48 @@ class AdminSupportTicketListAPIView(APIView):
 
             return Response(
                 {
-                    "message": "Only admin can access this."
+                    "message":
+                    "Only admin can access this."
                 },
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
+
 
         tickets = SupportTicket.objects.all()
 
+
         serializer = SupportTicketSerializer(
             tickets,
-            many=True
+            many=True,
         )
+
 
         return Response(
             {
-                "message": "Support tickets fetched successfully.",
-                "count": tickets.count(),
-                "data": serializer.data
+                "message":
+                "Support tickets fetched successfully.",
+
+                "count":
+                tickets.count(),
+
+                "data":
+                serializer.data,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
-    
+
+
+
+# ==========================================================
+# Admin Support Ticket Detail API
+# ==========================================================
+
 class AdminSupportTicketDetailAPIView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsAuthenticated
+    ]
+
 
     def get(self, request, pk):
 
@@ -190,29 +302,47 @@ class AdminSupportTicketDetailAPIView(APIView):
 
             return Response(
                 {
-                    "message": "Only admin can access this."
+                    "message":
+                    "Only admin can access this."
                 },
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
+
 
         ticket = get_object_or_404(
             SupportTicket,
-            pk=pk
+            pk=pk,
         )
 
-        serializer = SupportTicketSerializer(ticket)
+
+        serializer = SupportTicketSerializer(
+            ticket,
+        )
+
 
         return Response(
             {
-                "message": "Support ticket fetched successfully.",
-                "data": serializer.data
+                "message":
+                "Support ticket fetched successfully.",
+
+                "data":
+                serializer.data,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
-    
+
+
+
+# ==========================================================
+# Admin Ticket Reply API
+# ==========================================================
+
 class TicketReplyAPIView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsAuthenticated
+    ]
+
 
     def post(self, request, pk):
 
@@ -220,38 +350,58 @@ class TicketReplyAPIView(APIView):
 
             return Response(
                 {
-                    "message": "Only admin can reply."
+                    "message":
+                    "Only admin can reply."
                 },
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
+
 
         ticket = get_object_or_404(
             SupportTicket,
-            pk=pk
+            pk=pk,
         )
+
 
         serializer = TicketReplySerializer(
-            data=request.data
+            data=request.data,
         )
 
-        serializer.is_valid(raise_exception=True)
+
+        serializer.is_valid(
+            raise_exception=True,
+        )
+
 
         reply = serializer.save(
             ticket=ticket,
-            account=request.user
+            account=request.user,
         )
+
 
         return Response(
             {
-                "message": "Reply added successfully.",
-                "data": TicketReplySerializer(reply).data
+                "message":
+                "Reply added successfully.",
+
+                "data":
+                TicketReplySerializer(
+                    reply
+                ).data,
             },
-            status=status.HTTP_201_CREATED
+            status=status.HTTP_201_CREATED,
         )
-    
+
+# ==========================================================
+# Update Ticket Status API (Admin)
+# ==========================================================
+
 class UpdateTicketStatusAPIView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsAuthenticated
+    ]
+
 
     def put(self, request, pk):
 
@@ -259,36 +409,50 @@ class UpdateTicketStatusAPIView(APIView):
 
             return Response(
                 {
-                    "message": "Only admin can update ticket status."
+                    "message":
+                    "Only admin can update ticket status."
                 },
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
+
 
         ticket = get_object_or_404(
             SupportTicket,
-            pk=pk
+            pk=pk,
         )
 
-        status_value = request.data.get("status")
+
+        status_value = request.data.get(
+            "status"
+        )
+
 
         if status_value not in SupportTicket.Status.values:
 
             return Response(
                 {
-                    "message": "Invalid status."
+                    "message":
+                    "Invalid status."
                 },
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
+
 
         ticket.status = status_value
 
         ticket.save()
 
+
+
         return Response(
             {
-                "message": "Ticket status updated successfully.",
-                "data": SupportTicketSerializer(ticket).data
+                "message":
+                "Ticket status updated successfully.",
+
+                "data":
+                SupportTicketSerializer(
+                    ticket
+                ).data,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
-    
