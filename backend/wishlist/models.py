@@ -1,17 +1,10 @@
 from django.db import models
-from django.core.exceptions import ValidationError
 
 from accounts.models import Account
 from products.models import Product, ProductVariant
 
-from .validators import (
-    validate_product,
-)
+from .validators import validate_product
 
-
-# ==========================================================
-# Wishlist
-# ==========================================================
 
 class Wishlist(models.Model):
 
@@ -31,7 +24,7 @@ class Wishlist(models.Model):
 
     variant = models.ForeignKey(
         ProductVariant,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name="wishlist_variants",
         null=True,
         blank=True
