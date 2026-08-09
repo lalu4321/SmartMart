@@ -1,17 +1,22 @@
 from django.shortcuts import get_object_or_404
 
-from rest_framework.views import APIView
+from rest_framework import status
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.views import APIView
 
-from .models import FAQ
-from .admin_faq_serializers import AdminFAQSerializer
+from .models import (
+    FAQ,
+)
+
+from .admin_faq_serializers import (
+    AdminFAQSerializer,
+)
 
 
-# ==========================================
-# Admin FAQ List
-# ==========================================
+# ==========================================================
+# Admin FAQ List API
+# ==========================================================
 
 class AdminFAQListAPIView(APIView):
 
@@ -19,26 +24,34 @@ class AdminFAQListAPIView(APIView):
 
     def get(self, request):
 
-        faqs = FAQ.objects.all()
+        faqs = (
+            FAQ.objects
+            .all()
+            .order_by(
+                "-created_at",
+            )
+        )
 
         serializer = AdminFAQSerializer(
             faqs,
-            many=True
+            many=True,
         )
 
         return Response(
             {
-                "message": "FAQs fetched successfully.",
-                "count": faqs.count(),
-                "data": serializer.data,
+                "message":
+                "FAQs fetched successfully.",
+                "count":
+                faqs.count(),
+                "data":
+                serializer.data,
             },
             status=status.HTTP_200_OK,
         )
 
-
-# ==========================================
-# Admin FAQ Detail
-# ==========================================
+# ==========================================================
+# Admin FAQ Detail API
+# ==========================================================
 
 class AdminFAQDetailAPIView(APIView):
 
@@ -48,23 +61,27 @@ class AdminFAQDetailAPIView(APIView):
 
         faq = get_object_or_404(
             FAQ,
-            pk=pk
+            pk=pk,
         )
 
-        serializer = AdminFAQSerializer(faq)
+        serializer = AdminFAQSerializer(
+            faq,
+        )
 
         return Response(
             {
-                "message": "FAQ fetched successfully.",
-                "data": serializer.data,
+                "message":
+                "FAQ fetched successfully.",
+                "data":
+                serializer.data,
             },
             status=status.HTTP_200_OK,
         )
 
 
-# ==========================================
-# Admin FAQ Create
-# ==========================================
+# ==========================================================
+# Admin FAQ Create API
+# ==========================================================
 
 class AdminFAQCreateAPIView(APIView):
 
@@ -73,27 +90,28 @@ class AdminFAQCreateAPIView(APIView):
     def post(self, request):
 
         serializer = AdminFAQSerializer(
-            data=request.data
+            data=request.data,
         )
 
         serializer.is_valid(
-            raise_exception=True
+            raise_exception=True,
         )
 
         serializer.save()
 
         return Response(
             {
-                "message": "FAQ created successfully.",
-                "data": serializer.data,
+                "message":
+                "FAQ created successfully.",
+                "data":
+                serializer.data,
             },
             status=status.HTTP_201_CREATED,
         )
 
-
-# ==========================================
-# Admin FAQ Update
-# ==========================================
+# ==========================================================
+# Admin FAQ Update API
+# ==========================================================
 
 class AdminFAQUpdateAPIView(APIView):
 
@@ -103,33 +121,35 @@ class AdminFAQUpdateAPIView(APIView):
 
         faq = get_object_or_404(
             FAQ,
-            pk=pk
+            pk=pk,
         )
 
         serializer = AdminFAQSerializer(
             faq,
             data=request.data,
-            partial=True
+            partial=True,
         )
 
         serializer.is_valid(
-            raise_exception=True
+            raise_exception=True,
         )
 
         serializer.save()
 
         return Response(
             {
-                "message": "FAQ updated successfully.",
-                "data": serializer.data,
+                "message":
+                "FAQ updated successfully.",
+                "data":
+                serializer.data,
             },
             status=status.HTTP_200_OK,
         )
 
 
-# ==========================================
-# Admin FAQ Delete
-# ==========================================
+# ==========================================================
+# Admin FAQ Delete API
+# ==========================================================
 
 class AdminFAQDeleteAPIView(APIView):
 
@@ -139,14 +159,15 @@ class AdminFAQDeleteAPIView(APIView):
 
         faq = get_object_or_404(
             FAQ,
-            pk=pk
+            pk=pk,
         )
 
         faq.delete()
 
         return Response(
             {
-                "message": "FAQ deleted successfully."
+                "message":
+                "FAQ deleted successfully."
             },
             status=status.HTTP_200_OK,
         )

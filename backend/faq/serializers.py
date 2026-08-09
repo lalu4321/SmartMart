@@ -1,7 +1,13 @@
 from rest_framework import serializers
 
-from .models import FAQ
+from .models import (
+    FAQ,
+)
 
+
+# ==========================================================
+# FAQ Serializer
+# ==========================================================
 
 class FAQSerializer(serializers.ModelSerializer):
 

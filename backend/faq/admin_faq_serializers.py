@@ -1,7 +1,13 @@
 from rest_framework import serializers
 
-from .models import FAQ
+from .models import (
+    FAQ,
+)
 
+
+# ==========================================================
+# Admin FAQ Serializer
+# ==========================================================
 
 class AdminFAQSerializer(serializers.ModelSerializer):
 
@@ -14,6 +20,12 @@ class AdminFAQSerializer(serializers.ModelSerializer):
             "question",
             "answer",
             "is_active",
+            "created_at",
+            "updated_at",
+        )
+
+        read_only_fields = (
+            "id",
             "created_at",
             "updated_at",
         )
