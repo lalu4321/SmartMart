@@ -1,7 +1,13 @@
 from rest_framework import serializers
 
-from .models import Coupon
+from .models import (
+    Coupon,
+)
 
+
+# ==========================================================
+# Coupon Serializer
+# ==========================================================
 
 class CouponSerializer(serializers.ModelSerializer):
 
@@ -31,4 +37,4 @@ class CouponSerializer(serializers.ModelSerializer):
             "used_count",
             "created_at",
             "updated_at",
-        )
+        ) 

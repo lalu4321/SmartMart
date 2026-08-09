@@ -19,6 +19,11 @@ from .admin_coupon_views import (
 )
 
 urlpatterns = [
+
+    # ==================================
+    # Customer Coupon APIs
+    # ==================================
+
     path("", CouponCreateAPIView.as_view(), name="coupon-create"),
     path("list/", CouponListAPIView.as_view(), name="coupon-list"),
     path("<int:pk>/", CouponDetailAPIView.as_view(), name="coupon-detail"),
@@ -26,9 +31,9 @@ urlpatterns = [
     path("<int:pk>/delete/", CouponDeleteAPIView.as_view(), name="coupon-delete"),
     path("apply/", ApplyCouponAPIView.as_view(), name="apply-coupon"),
 
-    # ==========================
+    # ==================================
     # Admin Coupon APIs
-    # ==========================
+    # ==================================
 
     path("admin/list/", AdminCouponListAPIView.as_view(), name="admin-coupon-list"),
     path("admin/create/", AdminCouponCreateAPIView.as_view(), name="admin-coupon-create"),

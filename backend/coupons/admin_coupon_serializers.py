@@ -1,11 +1,13 @@
 from rest_framework import serializers
 
-from .models import Coupon
+from .models import (
+    Coupon,
+)
 
 
-# ==========================================
+# ==========================================================
 # Admin Coupon Serializer
-# ==========================================
+# ==========================================================
 
 class AdminCouponSerializer(serializers.ModelSerializer):
 
@@ -38,9 +40,9 @@ class AdminCouponSerializer(serializers.ModelSerializer):
         )
 
 
-# ==========================================
-# Coupon Status Serializer
-# ==========================================
+# ==========================================================
+# Admin Coupon Status Serializer
+# ==========================================================
 
 class AdminCouponStatusSerializer(serializers.Serializer):
 
