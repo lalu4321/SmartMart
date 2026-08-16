@@ -1704,9 +1704,7 @@ class MyProductsAPIView(APIView):
             )
 
             products = (
-                Product.objects.filter(
-                    seller=seller
-                )
+                Product.objects.all()   
                 .select_related(
                     "category",
                     "brand",
