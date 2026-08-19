@@ -88,9 +88,9 @@ urlpatterns = [
     path("api/reviews/", include("reviews.urls")),
 
 
-    # ==================================
+    # ======================================
     # Wishlist
-    # ==================================
+    # ======================================
 
     path("api/wishlist/", include("wishlist.urls")),
 
